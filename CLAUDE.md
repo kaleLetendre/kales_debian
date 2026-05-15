@@ -12,7 +12,11 @@ source of truth: if a package or config does not live here, it does not exist.
 
 1. **Everything goes in the repo or it did not happen.** If I say I installed
    something or changed a config, add it to the appropriate script before
-   declaring the task done. Do not just run a command on the system.
+   declaring the task done. Do not just run a command on the system. And
+   any time *you* are about to change this machine (install a package, edit
+   a config, drop a file in $HOME, modify a service), pause and ask: "Want
+   this tracked in the repo?" Default is yes; if I say skip, fine — the
+   ask itself is the obligation.
 2. **Scripts must be idempotent.** Re-running `bootstrap.sh` must be safe. Use
    patterns like `apt-get install -y` (idempotent by default),
    `grep -q PATTERN file || echo LINE >> file` for config edits, and existence
