@@ -63,8 +63,26 @@ For the Dell Precision 3591 (and similar modern UEFI laptops):
 
 ### 3. After first boot
 
-Open a terminal and install the bare minimum needed to clone this repo and
-run Claude Code:
+**First, add your user to the sudo group.** If you set a root password during
+install, the Debian installer does NOT add your user to `sudo`. (Leaving the
+root password blank would have added you automatically, but the installer
+prompts for one and most people fill it in.)
+
+Symptom: `sudo anything` says "user is not in the sudoers file."
+
+Fix, in a terminal:
+
+```
+su -
+# enter the root password you set during install
+usermod -aG sudo "$(logname)"
+exit
+```
+
+Then **log out of XFCE and log back in** (or reboot) so the new group
+membership takes effect. Confirm with `groups`, you should see `sudo` listed.
+
+Now install the bare minimum needed to clone this repo and run Claude Code:
 
 ```
 sudo apt update
