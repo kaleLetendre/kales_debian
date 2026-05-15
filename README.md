@@ -17,14 +17,20 @@ More than dotfiles. This repo manages:
 
 ```
 .
-├── bootstrap.sh             # entry point, detects machine, runs the rest
-├── common.sh                # packages and config for every machine
+├── bootstrap.sh             # entry point, iterates setup/, hardware/, dotfiles/
+├── setup/                   # numbered modules, one concern per file
+│   ├── 10-git-and-ssh.sh    # git identity + SSH key + GitHub auth
+│   ├── 20-base-packages.sh  # apt: git, curl, stow, tmux, build-essential, ...
+│   └── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
 ├── CLAUDE.md                # working agreement for Claude Code
 └── secrets/                 # gitignored, never committed
 ```
+
+Adding a new install or config means adding a new numbered file to `setup/`.
+`bootstrap.sh` picks it up automatically.
 
 ## Fresh-install bootstrap order
 
@@ -82,37 +88,49 @@ exit
 Then **log out of XFCE and log back in** (or reboot) so the new group
 membership takes effect. Confirm with `groups`, you should see `sudo` listed.
 
-Now install the bare minimum needed to clone this repo and run Claude Code:
+Install just enough to clone the repo. Everything else (Claude Code, base
+packages, SSH, identity, hardware tweaks, dotfiles) is handled by
+`bootstrap.sh`.
 
 ```
 sudo apt update
-sudo apt install -y git curl nodejs npm
+sudo apt install -y git
 ```
 
-### 4. Install Claude Code
+### 4. Clone this repo
 
-See https://docs.claude.com/claude-code for the current install command.
-Log in once it's installed.
-
-### 5. Clone this repo
+A fresh machine has no SSH key yet, so the first clone uses HTTPS. The
+bootstrap will generate a key, walk you through adding it to GitHub, and
+flip `origin` over to SSH for everything after that.
 
 ```
 mkdir -p ~/code && cd ~/code
-git clone git@github.com:kaleLetendre/kales_debian.git
+git clone https://github.com/kaleLetendre/kales_debian.git
 cd kales_debian
 ```
 
-(SSH key needs to be on GitHub for the clone. If not yet, use the HTTPS URL
-for the initial clone and add the SSH key later.)
-
-### 6. Run the bootstrap
+### 5. Run the bootstrap
 
 ```
 ./bootstrap.sh
 ```
 
-`bootstrap.sh` auto-selects the right `hardware/<machine>.sh` based on the
-DMI product name, runs `common.sh`, and stows any dotfile packages.
+What it does, in order:
+
+1. Iterates `setup/*.sh` in lex order. Currently:
+   - `10-git-and-ssh.sh` — sets global git `user.email`/`user.name`,
+     generates an `ed25519` key, pins `github.com` in `known_hosts`, and on
+     first run pauses while you paste the pubkey into
+     `https://github.com/settings/ssh/new`. Once auth works it flips
+     `origin` from HTTPS to SSH.
+   - `20-base-packages.sh` — apt-installs the base CLI toolkit.
+   - `30-claude-code.sh` — installs Claude Code from Anthropic's signed apt
+     repo (GPG fingerprint pinned in-script).
+2. Runs `hardware/<machine>.sh` matched by DMI product name, if present.
+3. Stows every package under `dotfiles/`.
+
+The only step that pauses for input is the GitHub key paste on first run
+of a new machine. Everything else is unattended.
 
 ## Re-running
 

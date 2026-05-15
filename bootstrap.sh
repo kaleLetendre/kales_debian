@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # bootstrap.sh - one-command setup for a fresh Debian 13 XFCE install.
-# Idempotent: safe to re-run after any change.
+# Idempotent: safe to re-run any time.
+#
+# Layout:
+#   setup/NN-thing.sh   - one concern per file, run in lex order on every
+#                         machine. Add a new file to add a new concern.
+#   hardware/<name>.sh  - runs only when the DMI product name matches.
+#   dotfiles/<pkg>/...  - stow packages, symlinked into $HOME at the end.
 
 set -euo pipefail
 
@@ -13,9 +19,15 @@ log "bootstrap starting"
 echo "Repo: $REPO_DIR"
 echo "Host: $(hostname)"
 
-# Common layer (runs on every machine).
-log "common.sh"
-bash "$REPO_DIR/common.sh"
+# Setup modules. Numbered prefix controls order. Each must be idempotent.
+if [[ -d "$REPO_DIR/setup" ]]; then
+    shopt -s nullglob
+    for module in "$REPO_DIR/setup"/*.sh; do
+        log "$(basename "$module")"
+        bash "$module"
+    done
+    shopt -u nullglob
+fi
 
 # Hardware-specific layer, picked by DMI product name.
 # /sys/class/dmi/id/product_name is readable without root and needs no extra package.

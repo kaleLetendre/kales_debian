@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# common.sh - runs on every machine. Idempotent.
-# Add packages and config that should exist on any Debian 13 XFCE install.
+# 20-base-packages.sh - CLI tools expected on every machine. Idempotent.
 
 set -euo pipefail
 
@@ -13,7 +12,6 @@ log() { printf "  -> %s\n" "$*"; }
 log "apt update"
 $SUDO apt-get update
 
-# Base CLI tools expected everywhere.
 log "base packages"
 $SUDO apt-get install -y \
     git \
@@ -25,6 +23,3 @@ $SUDO apt-get install -y \
     htop \
     tmux \
     build-essential
-
-# Add more sections below as the environment grows.
-# Group additions by purpose with a short comment explaining why.
