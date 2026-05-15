@@ -35,9 +35,8 @@ xfconf-query -c xsettings -p /Net/IconThemeName
 xfconf-query -c xfwm4    -p /general/theme
 ```
 
-## TODO
+## Where the wiring lives
 
-Per `CLAUDE.md` rule 1 ("everything in the repo or it didn't happen"), the
-actual install + xfconf-query lines should land in `common.sh` so a fresh
-machine ends up with this theme automatically. This file is just the notes;
-the script wiring is still pending.
+The install + `xfconf-query` apply lines are in `setup/40-themes.sh`. This
+file is just the design notes — if you change which theme/icon set you
+want, edit the module too.
