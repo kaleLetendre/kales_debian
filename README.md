@@ -28,24 +28,73 @@ More than dotfiles. This repo manages:
 
 ## Fresh-install bootstrap order
 
-1. Boot the Debian 13 Trixie netinst USB (Ventoy with the Debian ISO works).
-2. Install Debian 13 XFCE with LUKS-encrypted LVM. Uncheck GNOME, check Xfce.
-3. After first boot, in a terminal:
+### 0. Prep a Ventoy USB (one time, on any machine)
+
+1. Download the latest Ventoy Linux tarball from
+   https://github.com/ventoy/Ventoy/releases.
+2. Extract and install to the USB (replace `/dev/sdX` with your stick):
    ```
-   sudo apt update
-   sudo apt install -y git curl nodejs npm
+   sudo bash Ventoy2Disk.sh -i -g /dev/sdX
    ```
-4. Install Claude Code and log in. See https://docs.claude.com/claude-code.
-5. Clone this repo:
-   ```
-   mkdir -p ~/code && cd ~/code
-   git clone git@github.com:kaleLetendre/kales_debian.git
-   cd kales_debian
-   ```
-6. Run the bootstrap:
-   ```
-   ./bootstrap.sh
-   ```
+   `-i` install, `-g` GPT partition style. Secure Boot support is on by
+   default in recent Ventoy versions. This **wipes the USB**.
+3. Download the Debian 13 amd64 netinst ISO from
+   https://www.debian.org/distrib/ and copy it to the `Ventoy` exFAT
+   partition. The standard netinst includes non-free firmware since
+   Debian 12, so no separate `-firmware-` ISO is needed.
+
+### 1. BIOS settings (on the target laptop)
+
+For the Dell Precision 3591 (and similar modern UEFI laptops):
+
+- **Storage mode: AHCI** (not RAID). Linux needs this to see the NVMe.
+- **Secure Boot: on** is fine. Debian supports it out of the box.
+- **dGPU: enabled** so NVIDIA is available.
+- Boot the Ventoy USB. On ThinkPads tap **F12**, on Dells tap **F12**, for
+  the one-time boot menu.
+
+### 2. Install Debian 13 Trixie XFCE
+
+- Use the Debian installer's **guided encrypted LVM** (LUKS full-disk
+  encryption).
+- **Skip a swap partition.** Use a swapfile or zram later.
+- In `tasksel`: **uncheck GNOME**, **check Xfce**. Optionally uncheck
+  "Debian desktop environment" for a leaner base.
+
+### 3. After first boot
+
+Open a terminal and install the bare minimum needed to clone this repo and
+run Claude Code:
+
+```
+sudo apt update
+sudo apt install -y git curl nodejs npm
+```
+
+### 4. Install Claude Code
+
+See https://docs.claude.com/claude-code for the current install command.
+Log in once it's installed.
+
+### 5. Clone this repo
+
+```
+mkdir -p ~/code && cd ~/code
+git clone git@github.com:kaleLetendre/kales_debian.git
+cd kales_debian
+```
+
+(SSH key needs to be on GitHub for the clone. If not yet, use the HTTPS URL
+for the initial clone and add the SSH key later.)
+
+### 6. Run the bootstrap
+
+```
+./bootstrap.sh
+```
+
+`bootstrap.sh` auto-selects the right `hardware/<machine>.sh` based on the
+DMI product name, runs `common.sh`, and stows any dotfile packages.
 
 ## Re-running
 
