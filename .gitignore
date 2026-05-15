@@ -1,0 +1,12 @@
+# Never commit secrets, even on a private repo.
+secrets/
+
+# Editor backups
+*.swp
+*.swo
+*~
+*.bak
+
+# OS junk
+.DS_Store
+Thumbs.db
