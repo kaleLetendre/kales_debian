@@ -58,3 +58,12 @@ if command -v stow >/dev/null 2>&1 && [[ -d "$REPO_DIR/dotfiles" ]]; then
 fi
 
 log "bootstrap done"
+echo
+echo "Reboot recommended: some changes (e.g. xfce4-terminal settings,"
+echo "group memberships, kernel/driver updates) only take effect after a"
+echo "fresh login or full restart."
+echo
+read -r -p "Reboot now? [y/N] " ans
+if [[ "${ans,,}" == y* ]]; then
+    sudo systemctl reboot
+fi
