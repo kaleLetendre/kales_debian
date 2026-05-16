@@ -1,0 +1,4 @@
+{
+    "workspaces": ["personal", "caracal"],
+    "subdirs": ["repos", "documents"]
+}
