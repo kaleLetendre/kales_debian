@@ -10,9 +10,13 @@ set -euo pipefail
 log() { printf "  -> %s\n" "$*"; }
 
 # key | command
+# Note: xfsettingsd runs the command via g_spawn_command_line_async, which
+# splits on whitespace but does NOT do shell expansion -- wrap in bash -c
+# when you need $HOME / globs / etc.
 BINDINGS=(
     "<Super>c|code"
     "<Super>v|vivaldi"
+    "<Super>f|bash -c 'thunar \"\$HOME\"'"
 )
 
 if ! command -v xfconf-query >/dev/null 2>&1; then
