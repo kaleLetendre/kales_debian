@@ -103,8 +103,10 @@ A fresh machine has no SSH key yet, so the first clone uses HTTPS. The
 bootstrap will generate a key, walk you through adding it to GitHub, and
 flip `origin` over to SSH for everything after that.
 
+Clone directly into your home directory:
+
 ```
-mkdir -p ~/code && cd ~/code
+cd ~
 git clone https://github.com/kaleLetendre/kales_debian.git
 cd kales_debian
 ```
