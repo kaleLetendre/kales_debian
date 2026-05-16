@@ -21,9 +21,10 @@ source of truth: if a package or config does not live here, it does not exist.
    patterns like `apt-get install -y` (idempotent by default),
    `grep -q PATTERN file || echo LINE >> file` for config edits, and existence
    checks before creating files.
-3. **Common vs hardware-specific.** `common.sh` runs on any Debian XFCE
-   machine. `hardware/<machine>.sh` runs only on that specific machine. Do
-   not mix them. If unsure, ask.
+3. **Setup modules vs hardware-specific.** `setup/NN-thing.sh` modules run
+   on any Debian XFCE machine, in lex order, one concern per file (numbered
+   so order is explicit). `hardware/<machine>.sh` runs only on that
+   specific machine. Do not mix them. If unsure, ask.
 4. **No secrets in the repo, ever.** Not even in a private repo. SSH keys,
    tokens, work credentials live outside Git. The `secrets/` folder is
    gitignored.
@@ -37,7 +38,10 @@ source of truth: if a package or config does not live here, it does not exist.
 When I say "install X" or "set up Y" or "add Z to my shell":
 
 1. Decide which file owns the change:
-   - System-wide tool or service that belongs everywhere: `common.sh`
+   - System-wide tool or service that belongs everywhere: a new or existing
+     `setup/NN-thing.sh` module (one concern per file; pick the next free
+     number, or extend the matching existing module if the change is a
+     natural fit)
    - Tied to a specific machine's hardware: `hardware/<machine>.sh`
    - A dotfile: `dotfiles/<package>/...`
 2. Edit the file. Add a short comment with the reason. Keep it idempotent.
@@ -47,7 +51,7 @@ When I say "install X" or "set up Y" or "add Z to my shell":
    change is trivially safe (a dotfile edit that stow will pick up on the
    next bootstrap).
 
-If a change could belong in either common or hardware-specific, ask before
+If a change could belong in a setup module or hardware-specific, ask before
 guessing.
 
 ## Hardware reference: Dell Precision 3591
@@ -75,11 +79,12 @@ guessing.
 
 ## Testing
 
-Before any non-trivial change to `common.sh`, suggest spinning up a fresh
-Debian 13 XFCE VM and running `./bootstrap.sh` against it to catch regressions.
-For `hardware/precision-3591.sh` that is harder, so be extra careful.
+Before any non-trivial change to a `setup/*.sh` module, suggest spinning up
+a fresh Debian 13 XFCE VM and running `./bootstrap.sh` against it to catch
+regressions. For `hardware/precision-3591.sh` that is harder, so be extra
+careful.
 
 ## Tagging stable states
 
-Once `common.sh` produces a working environment, suggest `git tag v<N>` so I
+Once `bootstrap.sh` produces a working environment, suggest `git tag v<N>` so I
 can roll back if experiments break things.
