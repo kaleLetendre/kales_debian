@@ -1,49 +1,63 @@
 #!/usr/bin/env bash
-# 80-home-dirs.sh - scaffold "workspace" directories under $HOME, each
-# with a fixed set of subdirs. Layout is declarative in
-# setup/home-layout.json:
+# 80-home-dirs.sh - create the workspace folders under $HOME, plus the
+# standard XDG user dirs (Downloads, Documents, Pictures, ...). Also
+# pins ~/.config/user-dirs.dirs to canonical paths. Idempotent.
 #
-#   { "workspaces": ["personal", "caracal"],
-#     "subdirs":    ["repos", "documents"] }
-#
-# A workspace is a top-level parent folder for everything related to a
-# project or workplace. Subdirs are the same for every workspace. To add
-# or rename a workspace, edit home-layout.json -- no script change needed.
-#
-# Idempotent.
+# Why not just `xdg-user-dirs-update`: that tool only rewrites the
+# config file, it does NOT create missing directories. Worse: if a
+# configured dir was deleted, it "helpfully" reassigns the XDG slot to
+# $HOME itself, which means browsers, screenshot tools, etc. then dump
+# files directly into $HOME. We bypass it and manage the file ourselves.
 
 set -euo pipefail
 
-export DEBIAN_FRONTEND=noninteractive
-SUDO=""
-if [[ $EUID -ne 0 ]]; then SUDO="sudo"; fi
-
 log() { printf "  -> %s\n" "$*"; }
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LAYOUT="$SCRIPT_DIR/home-layout.json"
+WORKSPACES=(
+    "$HOME/personal"
+    "$HOME/caracal"
+)
 
-if [[ ! -f "$LAYOUT" ]]; then
-    echo "$LAYOUT not found" >&2
-    exit 1
-fi
+# Standard XDG user dirs. Names match what XFCE / browsers / etc.
+# expect at $HOME/<name>.
+XDG_DIRS=(
+    "Desktop"
+    "Downloads"
+    "Documents"
+    "Pictures"
+    "Music"
+    "Videos"
+    "Templates"
+    "Public"
+)
 
-if ! command -v jq >/dev/null 2>&1; then
-    log "installing jq"
-    $SUDO apt-get install -y jq
-fi
-
-mapfile -t workspaces < <(jq -r '.workspaces[]' "$LAYOUT")
-mapfile -t subdirs    < <(jq -r '.subdirs[]'    "$LAYOUT")
-
-for ws in "${workspaces[@]}"; do
-    for sd in "${subdirs[@]}"; do
-        d="$HOME/$ws/$sd"
-        if [[ -d "$d" ]]; then
-            log "$d already exists"
-        else
-            log "creating $d"
-            mkdir -p "$d"
-        fi
-    done
+for d in "${WORKSPACES[@]}" "${XDG_DIRS[@]/#/$HOME/}"; do
+    if [[ -d "$d" ]]; then
+        log "$d already exists"
+    else
+        log "creating $d"
+        mkdir -p "$d"
+    fi
 done
+
+# Pin the XDG config so apps look in $HOME/<name>, not somewhere stale.
+CFG="$HOME/.config/user-dirs.dirs"
+read -r -d '' CFG_BODY <<'EOF' || true
+# Managed by kales_debian/setup/80-home-dirs.sh. Edit there, not here.
+XDG_DESKTOP_DIR="$HOME/Desktop"
+XDG_DOWNLOAD_DIR="$HOME/Downloads"
+XDG_TEMPLATES_DIR="$HOME/Templates"
+XDG_PUBLICSHARE_DIR="$HOME/Public"
+XDG_DOCUMENTS_DIR="$HOME/Documents"
+XDG_MUSIC_DIR="$HOME/Music"
+XDG_PICTURES_DIR="$HOME/Pictures"
+XDG_VIDEOS_DIR="$HOME/Videos"
+EOF
+
+mkdir -p "$(dirname "$CFG")"
+if [[ -f "$CFG" ]] && diff -q <(printf '%s\n' "$CFG_BODY") "$CFG" >/dev/null 2>&1; then
+    log "$CFG already current"
+else
+    log "writing $CFG"
+    printf '%s\n' "$CFG_BODY" > "$CFG"
+fi
