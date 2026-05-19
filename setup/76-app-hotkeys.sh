@@ -14,7 +14,8 @@ log() { printf "  -> %s\n" "$*"; }
 # splits on whitespace but does NOT do shell expansion -- wrap in bash -c
 # when you need $HOME / globs / etc.
 BINDINGS=(
-    "<Super>c|code"
+    "<Super>c|galculator"
+    "<Super>e|code"
     "<Super>v|vivaldi"
     "<Super>f|bash -c 'thunar \"\$HOME\"'"
 )
