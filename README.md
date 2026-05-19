@@ -120,11 +120,16 @@ cd kales_debian
 What it does, in order:
 
 1. Iterates `setup/*.sh` in lex order. Currently:
-   - `10-git-and-ssh.sh` — sets global git `user.email`/`user.name`,
-     generates an `ed25519` key, pins `github.com` in `known_hosts`, and on
-     first run pauses while you paste the pubkey into
-     `https://github.com/settings/ssh/new`. Once auth works it flips
-     `origin` from HTTPS to SSH.
+   - `10-git-and-ssh.sh` — sets two git identities (personal globally,
+     caracal via `includeIf` for anything under `~/caracal/`), generates
+     two `ed25519` keys (one for GitHub, one for Bitbucket), writes a
+     per-host `~/.ssh/config` so each host uses its own key, pins both
+     hosts in `known_hosts`, and on first run pauses while you paste each
+     pubkey into the matching host:
+     - GitHub: `https://github.com/settings/ssh/new`
+     - Bitbucket: `https://bitbucket.org/account/settings/ssh-keys/`
+
+     Once auth works it flips `origin` from HTTPS to SSH.
    - `20-base-packages.sh` — apt-installs the base CLI toolkit.
    - `30-claude-code.sh` — installs Claude Code from Anthropic's signed apt
      repo (GPG fingerprint pinned in-script).
