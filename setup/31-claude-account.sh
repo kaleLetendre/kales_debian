@@ -1,78 +1,87 @@
 #!/usr/bin/env bash
-# 31-claude-account.sh - confirm Claude Code is logged in and the
-# Atlassian Rovo MCP (Jira/Confluence) is authenticated. Idempotent.
+# 31-claude-account.sh - register Atlassian's Remote MCP (Jira/Confluence)
+# at user scope and verify it is authenticated. Idempotent.
 #
-# Both steps are interactive OAuth flows that can't be automated from a
-# script. This module's job is detection + clear next steps. It never
-# blocks the bootstrap: if something is unfinished it prints what to do
-# and exits 0 so the rest of bootstrap.sh still runs.
+# Uses Atlassian's official Remote MCP Server, NOT the "claude.ai
+# Atlassian Rovo" connector that claude.ai pre-wires into your account.
+# Both endpoints share the URL https://mcp.atlassian.com/v1/mcp but the
+# OAuth flows request different scopes: the Rovo connector asks for
+# broad Rovo-agent permissions, while a manual `claude mcp add`
+# registration goes through its own OAuth with just the core
+# Jira/Confluence scopes (search/create/update/comment/transition/fetch).
+# That is the lighter-permission setup we want.
 #
-# The "claude.ai Atlassian Rovo" MCP is account-tied, not local config:
-# it appears in `claude mcp list` only after `claude /login` succeeds
-# with an account that has the Atlassian integration enabled on
-# claude.ai. `claude mcp get` does NOT see it, only `claude mcp list`.
+# Endpoint per Atlassian's GA announcement (Feb 2026). The legacy SSE
+# transport at /v1/sse is deprecated and will be removed 2026-06-30.
+#
+# This module never blocks the bootstrap: it registers what it can and
+# prints clear next steps for the interactive OAuth handshake.
 
 set -euo pipefail
 
+MCP_NAME="atlassian"
+MCP_URL="https://mcp.atlassian.com/v1/mcp"
 CREDS="$HOME/.claude/.credentials.json"
 
 log() { printf "  -> %s\n" "$*"; }
 
-# 1. Is claude on PATH? 30-claude-code.sh should have installed it, but
-#    don't assume - the apt install can be shadowed by ~/.local/bin/claude
-#    or skipped entirely on re-runs.
+# 1. claude on PATH? 30-claude-code.sh should have installed it.
 if ! command -v claude >/dev/null 2>&1; then
     log "claude not on PATH - skipping (see 30-claude-code.sh)"
     exit 0
 fi
 
-# 2. Login state. .credentials.json is written by `claude /login`. If
-#    missing or empty the user hasn't completed the OAuth handshake.
+# 2. Logged in to claude.ai? .credentials.json is written by /login.
+#    Without it, `claude mcp add` and `claude mcp list` may still work
+#    but the MCP can't be used until login completes anyway, so bail
+#    early with a clear next step.
 if [[ ! -s "$CREDS" ]]; then
     echo
     echo "Claude Code is not logged in to claude.ai."
     echo "Run:    claude"
     echo "then:   /login"
-    echo "and complete the browser flow with the claude.ai account that"
-    echo "owns the Atlassian (Jira/Confluence) integration. Then re-run"
-    echo "this script to verify the MCP."
+    echo "then re-run this script."
     exit 0
 fi
 log "claude code is logged in"
 
-# 3. MCP state. `claude mcp list` queries each configured server and
-#    appends "✓ Connected" or "! Needs authentication" per line. The
-#    Atlassian Rovo entry is account-attached, so it shows up
-#    automatically once login succeeds.
+# 3. Register the MCP at user scope so it's available from any working
+#    directory. `claude mcp get` exits non-zero when the server isn't
+#    registered locally - that's our idempotency signal. Note that the
+#    "claude.ai Atlassian Rovo" entry, if present, is account-attached
+#    and invisible to `claude mcp get`; it does not conflict.
+if ! claude mcp get "$MCP_NAME" >/dev/null 2>&1; then
+    log "registering '$MCP_NAME' MCP at user scope ($MCP_URL)"
+    claude mcp add --transport http --scope user "$MCP_NAME" "$MCP_URL"
+else
+    log "'$MCP_NAME' MCP already registered"
+fi
+
+# 4. Verify connection. `claude mcp list` prints one line per server
+#    ending in "✓ Connected" or "! Needs authentication". On first
+#    registration auth is always required - point the user at /mcp.
 mcp_list="$(claude mcp list 2>&1 || true)"
-atlassian_line="$(grep -i "Atlassian Rovo" <<<"$mcp_list" || true)"
+line="$(grep -E "^${MCP_NAME}:" <<<"$mcp_list" || true)"
 
-if [[ -z "$atlassian_line" ]]; then
-    echo
-    echo "The Atlassian Rovo MCP is not listed by 'claude mcp list'."
-    echo "Likely cause: the logged-in claude.ai account does not have the"
-    echo "Atlassian integration enabled. Enable it at:"
-    echo "  https://claude.ai/settings/connectors"
-    echo "then re-run this script."
+if [[ -z "$line" ]]; then
+    log "warning: '$MCP_NAME' not visible in 'claude mcp list' output"
+    log "         (check 'claude mcp list' manually)"
     exit 0
 fi
 
-if grep -q "Connected" <<<"$atlassian_line"; then
-    log "atlassian rovo mcp: ✓ Connected"
+if grep -q "Connected" <<<"$line"; then
+    log "'$MCP_NAME' mcp: ✓ Connected"
     exit 0
 fi
 
-if grep -q "Needs authentication" <<<"$atlassian_line"; then
-    echo
-    echo "Atlassian Rovo MCP needs authentication."
-    echo "Inside Claude Code:"
-    echo "  1. run:  claude"
-    echo "  2. run:  /mcp"
-    echo "  3. select 'claude.ai Atlassian Rovo' and complete the OAuth flow"
-    echo "Then re-run this script to verify."
-    exit 0
-fi
-
-# Unknown state - print the line for debugging but don't fail.
-log "atlassian rovo mcp: unrecognized state"
-log "      $atlassian_line"
+echo
+echo "Atlassian MCP ('$MCP_NAME') needs authentication."
+echo "Inside Claude Code:"
+echo "  1. run:  claude"
+echo "  2. run:  /mcp"
+echo "  3. select '$MCP_NAME' and complete the browser OAuth flow"
+echo "Then re-run this script to verify."
+echo
+echo "(The 'claude.ai Atlassian Rovo' entry, if you see it, is the"
+echo " account-level Rovo connector with broader scopes. Ignore it, or"
+echo " disable it at https://claude.ai/settings/connectors )"

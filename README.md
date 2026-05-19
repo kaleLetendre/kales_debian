@@ -137,10 +137,15 @@ What it does, in order:
      repo (GPG fingerprint pinned in-script), and ensures `~/.claude/`
      exists so the dotfiles stow step at the end of bootstrap folds at the
      file level (not the whole directory).
-   - `31-claude-account.sh` — checks `claude.ai` login state and the
-     `claude.ai Atlassian Rovo` MCP. Both are interactive OAuth flows; the
-     module detects state and prints the next manual step (run `claude`,
-     `/login`, or `/mcp`), never blocking the bootstrap.
+   - `31-claude-account.sh` — registers Atlassian's official Remote MCP
+     (`https://mcp.atlassian.com/v1/mcp`) at user scope under the name
+     `atlassian`, then prompts for the `/mcp` OAuth flow inside Claude
+     Code. This is the *non-Rovo* path: same hostname as the `claude.ai
+     Atlassian Rovo` connector but the manual registration triggers its
+     own OAuth flow with just the core Jira/Confluence scopes, not
+     Rovo's broader agent permissions. Login and the OAuth handshake
+     are interactive; the module detects state and prints the next
+     manual step, never blocking the bootstrap.
 2. Runs `hardware/<machine>.sh` matched by DMI product name, if present.
 3. Stows every package under `dotfiles/`.
 
