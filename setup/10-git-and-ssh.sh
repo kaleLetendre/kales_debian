@@ -138,7 +138,7 @@ bitbucket_auth_ok() {
               -o StrictHostKeyChecking=yes \
               -o ConnectTimeout=5 \
               -T git@bitbucket.org 2>&1) || true
-    grep -q "logged in as" <<<"$out"
+    grep -q "authenticated via ssh key" <<<"$out"
 }
 
 prompt_for_key() {
