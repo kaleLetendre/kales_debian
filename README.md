@@ -21,10 +21,12 @@ More than dotfiles. This repo manages:
 ├── setup/                   # numbered modules, one concern per file
 │   ├── 10-git-and-ssh.sh    # git identity + SSH key + GitHub auth
 │   ├── 20-base-packages.sh  # apt: git, curl, stow, tmux, build-essential, ...
-│   └── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
+│   ├── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
+│   └── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
+│   └── claude/.claude/      # global CLAUDE.md + settings.json
 ├── CLAUDE.md                # working agreement for Claude Code
 └── secrets/                 # gitignored, never committed
 ```
@@ -132,7 +134,13 @@ What it does, in order:
      Once auth works it flips `origin` from HTTPS to SSH.
    - `20-base-packages.sh` — apt-installs the base CLI toolkit.
    - `30-claude-code.sh` — installs Claude Code from Anthropic's signed apt
-     repo (GPG fingerprint pinned in-script).
+     repo (GPG fingerprint pinned in-script), and ensures `~/.claude/`
+     exists so the dotfiles stow step at the end of bootstrap folds at the
+     file level (not the whole directory).
+   - `31-claude-account.sh` — checks `claude.ai` login state and the
+     `claude.ai Atlassian Rovo` MCP. Both are interactive OAuth flows; the
+     module detects state and prints the next manual step (run `claude`,
+     `/login`, or `/mcp`), never blocking the bootstrap.
 2. Runs `hardware/<machine>.sh` matched by DMI product name, if present.
 3. Stows every package under `dotfiles/`.
 

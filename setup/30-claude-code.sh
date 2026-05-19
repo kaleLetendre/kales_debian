@@ -58,7 +58,16 @@ $SUDO apt-get update
 log "installing claude-code"
 $SUDO apt-get install -y claude-code
 
-# 6. Heads-up if a pre-existing native install at ~/.local/bin/claude
+# 6. Ensure ~/.claude exists as a real directory before dotfiles stow runs.
+#    Without this, `stow` would tree-fold the entire dotfiles/claude/.claude
+#    package into a single symlink at ~/.claude, and claude-code's
+#    runtime state (history.jsonl, sessions/, .credentials.json) would
+#    start landing inside the repo. Creating the dir up front forces stow
+#    to fold at file level instead, so only the tracked files (CLAUDE.md,
+#    settings.json) become symlinks.
+mkdir -p "$HOME/.claude"
+
+# 7. Heads-up if a pre-existing native install at ~/.local/bin/claude
 #    shadows the apt-installed binary on PATH. Don't auto-delete; that's
 #    destructive and the user may have history/sessions tied to it.
 if [[ -e "$HOME/.local/bin/claude" ]] && [[ "$(command -v claude || true)" != "/usr/bin/claude" ]]; then
