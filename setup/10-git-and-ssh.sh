@@ -106,6 +106,24 @@ Host bitbucket.org
 EOF
 fi
 
+# 4b. `caracal` host alias for bitbucket.org. Every repo under ~/caracal/
+#     uses git@caracal:... so the host alias makes it explicit (and
+#     greppable) that those remotes go through the caracal/work key.
+#     Also lets us add work-only ssh options here later without polluting
+#     personal-bitbucket usage.
+if ! grep -q "kales_debian: caracal alias" "$SSH_CONFIG"; then
+    log "adding caracal alias host block to $SSH_CONFIG"
+    cat >> "$SSH_CONFIG" <<EOF
+
+# kales_debian: caracal alias (bitbucket via caracal key only)
+Host caracal
+    HostName bitbucket.org
+    User git
+    IdentityFile $CARACAL_KEY
+    IdentitiesOnly yes
+EOF
+fi
+
 # 5. Pin hosts in known_hosts so the first connection doesn't stop on the
 #    interactive yes/no prompt.
 touch "$KNOWN"
@@ -190,4 +208,37 @@ if [[ -d "$REPO_DIR/.git" ]]; then
         log "switching origin from HTTPS to SSH: $new_url"
         git -C "$REPO_DIR" remote set-url origin "$new_url"
     fi
+fi
+
+# 8. Normalize every git remote under ~/caracal/ to the `caracal` SSH host
+#    alias. Repos arriving from another machine may have `git@bitbucket.org:`
+#    or `https://...bitbucket.org/` remotes; rewrite to `git@caracal:` so
+#    pushes from this tree always go through the caracal key + alias.
+#    Idempotent: only rewrites when the URL actually needs to change.
+if [[ -d "$CARACAL_DIR" ]]; then
+    log "normalizing remotes under $CARACAL_DIR"
+    while IFS= read -r -d '' gitdir; do
+        repo="${gitdir%/.git}"
+        # Process every remote, not just origin, in case forks or upstreams exist.
+        while read -r remote; do
+            [[ -z "$remote" ]] && continue
+            url="$(git -C "$repo" remote get-url "$remote" 2>/dev/null || true)"
+            new_url=""
+            case "$url" in
+                git@bitbucket.org:*)
+                    new_url="git@caracal:${url#git@bitbucket.org:}"
+                    ;;
+                https://*bitbucket.org/*)
+                    # strips optional `user@` and the host prefix in one shot
+                    path="${url#https://}"
+                    path="${path#*bitbucket.org/}"
+                    new_url="git@caracal:${path%.git}.git"
+                    ;;
+            esac
+            if [[ -n "$new_url" && "$new_url" != "$url" ]]; then
+                log "  ${repo#$HOME/} ($remote): $url -> $new_url"
+                git -C "$repo" remote set-url "$remote" "$new_url"
+            fi
+        done < <(git -C "$repo" remote 2>/dev/null)
+    done < <(find "$CARACAL_DIR" -type d -name .git -print0 2>/dev/null)
 fi
