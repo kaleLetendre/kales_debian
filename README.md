@@ -22,7 +22,9 @@ More than dotfiles. This repo manages:
 │   ├── 10-git-and-ssh.sh    # git identity + SSH key + GitHub auth
 │   ├── 20-base-packages.sh  # apt: git, curl, stow, tmux, build-essential, ...
 │   ├── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
-│   └── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
+│   ├── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
+│   ├── ...                   # desktop apps, themes, hotkeys, etc.
+│   └── 83-dev-libs.sh        # -dev libraries: sqlite, rabbitmq-c, openssl, curl
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
