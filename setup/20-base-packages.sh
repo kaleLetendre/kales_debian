@@ -22,4 +22,5 @@ $SUDO apt-get install -y \
     stow \
     htop \
     tmux \
-    build-essential
+    build-essential \
+    postgresql-client
