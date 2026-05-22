@@ -52,3 +52,35 @@ if ! dpkg -s vivaldi-stable >/dev/null 2>&1; then
 else
     log "vivaldi-stable already installed"
 fi
+
+# Make Vivaldi the default web browser. Two stores have to agree:
+#   1. XFCE's exo-helpers (~/.config/xfce4/helpers.rc, WebBrowser=...).
+#      Used by exo-open and apps that go through XFCE's preferred-app
+#      layer. `xdg-settings` updates this on XFCE.
+#   2. xdg MIME associations (~/.config/mimeapps.list, x-scheme-handler/
+#      http etc). Used by xdg-open and GTK's gtk_show_uri, which is the
+#      path xfce4-terminal takes when you ctrl-click a link. xdg-settings
+#      on XFCE does NOT touch this — we set it explicitly with xdg-mime.
+# Both are per-user, no sudo. Guards keep the log clean on re-runs.
+
+if [[ "$(xdg-settings get default-web-browser)" != "vivaldi-stable.desktop" ]]; then
+    log "setting vivaldi-stable as default browser (xfce helpers)"
+    xdg-settings set default-web-browser vivaldi-stable.desktop
+else
+    log "vivaldi-stable already default browser (xfce helpers)"
+fi
+
+mime_targets=(x-scheme-handler/http x-scheme-handler/https text/html)
+mime_needs_update=0
+for mt in "${mime_targets[@]}"; do
+    if [[ "$(xdg-mime query default "$mt")" != "vivaldi-stable.desktop" ]]; then
+        mime_needs_update=1
+        break
+    fi
+done
+if (( mime_needs_update )); then
+    log "registering vivaldi-stable as MIME handler for http/https/html"
+    xdg-mime default vivaldi-stable.desktop "${mime_targets[@]}"
+else
+    log "vivaldi-stable already MIME handler for http/https/html"
+fi
