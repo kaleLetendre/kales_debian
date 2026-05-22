@@ -104,6 +104,37 @@ Terminal=false
 EOF
 write_autostart "$AUTOSTART_DIR/ulauncher.desktop" "$ULAUNCHER_AUTOSTART"
 
+# Disable the tray indicator. ulauncher rewrites settings.json whenever
+# you change a preference in its UI, so stowing the whole file would be
+# clobbered on the next save -- we patch just the one key in place.
+SETTINGS="$HOME/.config/ulauncher/settings.json"
+mkdir -p "$(dirname "$SETTINGS")"
+config_changed=0
+patch_result="$(python3 - "$SETTINGS" <<'PY'
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path) as f:
+        cfg = json.load(f)
+except FileNotFoundError:
+    cfg = {}
+if cfg.get("show-indicator-icon") is False:
+    sys.exit(0)
+cfg["show-indicator-icon"] = False
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(cfg, f, indent=4)
+os.replace(tmp, path)
+print("changed")
+PY
+)"
+if [[ "$patch_result" == "changed" ]]; then
+    log "disabled ulauncher tray indicator"
+    config_changed=1
+else
+    log "ulauncher tray indicator already disabled"
+fi
+
 # Apply now: start xcape and ulauncher for the running session so no
 # logout/login needed.
 if [[ -n "${DISPLAY:-}" ]]; then
@@ -118,6 +149,12 @@ if [[ -n "${DISPLAY:-}" ]]; then
     # filename happens to contain "ulauncher" (e.g. this one).
     if ! pgrep -f '(^|/)ulauncher( |$)' >/dev/null 2>&1; then
         log "starting ulauncher daemon for current session"
+        nohup ulauncher --hide-window >/dev/null 2>&1 &
+        disown 2>/dev/null || true
+    elif (( config_changed )); then
+        log "restarting ulauncher to pick up new settings"
+        pkill -f '(^|/)ulauncher( |$)' || true
+        sleep 0.5
         nohup ulauncher --hide-window >/dev/null 2>&1 &
         disown 2>/dev/null || true
     else
