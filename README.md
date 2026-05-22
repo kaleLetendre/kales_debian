@@ -24,11 +24,13 @@ More than dotfiles. This repo manages:
 │   ├── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
 │   ├── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
 │   ├── ...                   # desktop apps, themes, hotkeys, etc.
-│   └── 83-dev-libs.sh        # -dev libraries: sqlite, rabbitmq-c, openssl, curl
+│   ├── 83-dev-libs.sh        # -dev libraries: sqlite, rabbitmq-c, openssl, curl
+│   └── 84-zsh.sh             # zsh + fzf, sets zsh as the login shell
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
-│   └── claude/.claude/      # global CLAUDE.md + settings.json
+│   ├── claude/.claude/      # global CLAUDE.md + settings.json
+│   └── zsh/                  # .zshrc + ~/.zshrc.d/ widgets (built brick by brick)
 ├── CLAUDE.md                # working agreement for Claude Code
 └── secrets/                 # gitignored, never committed
 ```
