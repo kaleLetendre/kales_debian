@@ -24,12 +24,17 @@ More than dotfiles. This repo manages:
 │   ├── 30-claude-code.sh    # Claude Code via Anthropic's signed apt repo
 │   ├── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
 │   ├── ...                   # desktop apps, themes, hotkeys, etc.
-│   ├── 83-dev-libs.sh        # -dev libraries: sqlite, rabbitmq-c, openssl, curl
-│   └── 84-zsh.sh             # zsh + fzf, sets zsh as the login shell
+│   ├── 84-zsh.sh             # zsh + fzf + zoxide, sets zsh as the login shell
+│   ├── 85-bluetooth.sh       # bluez + blueman + reconnect tuning
+│   ├── 87-i3.sh              # opt-in "Xfce with i3" login session
+│   ├── 88-keyboard.sh        # hid_apple fnmode for Apple-style keyboards
+│   ├── 89-audio.sh           # PulseAudio panel plugin + media keys
+│   └── 90-gimp.sh            # GIMP image editor
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
 │   ├── claude/.claude/      # global CLAUDE.md + settings.json
+│   ├── i3/.config/i3/        # i3 config + cheatsheet (Xfce-with-i3 session)
 │   └── zsh/                  # .zshrc + ~/.zshrc.d/ widgets (built brick by brick)
 ├── CLAUDE.md                # working agreement for Claude Code
 └── secrets/                 # gitignored, never committed
@@ -160,6 +165,20 @@ What it does, in order:
 
 The only step that pauses for input is the GitHub key paste on first run
 of a new machine. Everything else is unattended.
+
+## Window managers / sessions
+
+After bootstrap, the LightDM login screen (gear menu) offers:
+
+- **Xfce Session** — the default. Standard XFCE with the xfwm4 window
+  manager. This is home base.
+- **Xfce with i3** — same XFCE panel / tray / autostart, but with i3 as a
+  tiling window manager instead of xfwm4 (`setup/87-i3.sh`). Keyboard-
+  driven; press **Super+?** inside it for the keybinding cheatsheet. To
+  leave, **Super+Shift+E** exits back to the login screen.
+
+The stock **i3** / **i3 (debug)** entries come from the `i3` package itself
+and are barebones (no panel/tray/autostart) — use "Xfce with i3" instead.
 
 ## Re-running
 

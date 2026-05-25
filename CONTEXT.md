@@ -69,12 +69,12 @@ These are the rules a candidate tool has to pass before it goes in:
 - All zsh work committed. Tag `v1` planned as the rollback point before
   i3 work begins.
 
-## In flight: i3 as an opt-in window manager (Phase 1)
+## Done: i3 as an opt-in "Xfce with i3" login session
 
 Goal: a fully keyboard-driven window-management workflow without giving
-up XFCE's panel/notifications/session-manager/ulauncher/etc. xfwm4
-already handles half-tile via `setup/77-window-tiling.sh`, but everything
-else (move, resize, send to workspace, focus) still wants a mouse.
+up XFCE's panel/notifications/ulauncher/etc. xfwm4 already handles
+half-tile via `setup/77-window-tiling.sh`, but everything else (move,
+resize, send to workspace, focus) still wants a mouse.
 
 ### Decisions made
 
@@ -83,33 +83,52 @@ else (move, resize, send to workspace, focus) still wants a mouse.
   for windows. Closer to vimium's discoverable-pattern shape than to
   "yet another new verb to remember in isolation".
 - **NOT sway.** NVIDIA pins us to X11.
-- **NOT a full DE swap.** We replace only xfwm4 as the WM; the rest of
-  XFCE (panel, notifications, session, ulauncher, theme, power-manager)
-  survives untouched.
-- **Phase 1 = low impact, opt-in toggle.** No xfconf/session changes.
-  Use `i3 --replace` to swap WMs live; `xfwm4 --replace` to swap back.
-  Bind a single chord — **Super+Shift+W** — on both sides to invoke a
-  `/usr/local/bin/toggle-wm` script that detects which WM is running and
-  replaces with the other. Logging out resets to xfwm4 by default, so
-  there is no commitment.
-- **Phase 2** (lightdm session picker) and **Phase 3** (i3 as default
-  session) are deferred until Phase 1 has bedded in.
+- **NOT a full DE swap.** We replace only the window manager; the rest of
+  XFCE (panel, notifications, ulauncher, theme, power-manager) survives.
+- **Phase 1 (live `--replace` toggle) was abandoned — don't revisit.**
+  The idea was a Super+Shift+W chord running `/usr/local/bin/toggle-wm`
+  to swap xfwm4 ↔ i3 in place. It broke badly: under dual-monitor, an
+  `i3 --replace` of a running XFCE session scatters adopted windows
+  across per-output i3 workspaces, the panel's `_NET_WORKAREA` goes
+  wrong, and swapping back leaves xfwm4 decorations/work-area corrupted.
+  Mid-session WM swaps just aren't reliable on this setup.
+- **Phase 2 (separate login session) shipped.** A dedicated
+  "Xfce with i3" entry in LightDM. Each login is a clean start — the
+  monitor layout is known at i3 startup instead of mid-swap. Round-trip
+  cost is a logout/login (~5s) instead of a chord.
 
-### How it'll be tracked in this repo
+### Known trade-off (accepted)
 
-- `setup/87-i3.sh` — installs `i3` + `i3status`, drops
-  `/usr/local/bin/toggle-wm`, binds Super+Shift+W in xfwm4's keyboard-
-  shortcuts channel. Does NOT change the active WM or xfce4-session
-  config — that's deliberate, Phase 1 stays opt-in.
-- `dotfiles/i3/.config/i3/config` — hand-written, stowed in. ~15
-  bindings: `Super+arrow` focus, `Super+Shift+arrow` move,
-  `Super+1..9`/`Super+Shift+1..9` workspace, `Super+R` resize mode,
-  `Super+F` fullscreen, `Super+space` toggle floating, `Super+D`
-  ulauncher, `Super+Shift+W` → toggle-wm.
+The session is **pure i3** (no `xfce4-session`), so there is **no app
+save/restore** on logout — terminals don't reopen. Stateful apps that
+persist themselves (Vivaldi tabs, VS Code buffers) are fine. If this
+becomes annoying, the heavier fix is wiring i3 *under* xfce4-session
+(via `--name`), which keeps save/restore. Not done; pure-i3 first.
 
-### Status (as of 2026-05-21)
+### How it's tracked in this repo
 
-- Not yet written — `v1` tag pending as the rollback point.
+- `setup/87-i3.sh` — installs `i3` + `i3status` + `dex`; writes
+  `/usr/local/bin/start-xfce-i3` (the session launcher) and
+  `/usr/share/xsessions/xfce-i3.desktop` (the LightDM entry). Does NOT
+  touch the default Xfce session.
+- The launcher starts `xfsettingsd` + `xfce4-panel` explicitly, then runs
+  `dex --autostart --environment XFCE` to replay every XDG autostart
+  entry exactly as xfce4-session would (gnome-keyring/ssh-agent, polkit
+  agent, light-locker, notifyd, clipman, blueman, nm-applet, ulauncher,
+  **xcape** for tap-Super, power-manager), then `exec i3`. Using dex
+  instead of a hand-list is what keeps this from silently dropping
+  services — we missed xcape on the first hand-written pass.
+- `dotfiles/i3/.config/i3/config` — hand-written, stowed in. Mirrors the
+  XFCE app chords (Super+C/E/V/F/P), tap-Super→ulauncher (via xcape's
+  synthesized Super+F12), `Super+?` → cheatsheet, `Super+Shift+E` →
+  confirmed exit. No F-key bindings (flaky on the BT keyboard).
+- `dotfiles/i3/.config/i3/CHEATSHEET.md` — the keybinding reference,
+  opened in-session with Super+?.
+
+### Status (as of 2026-05-22)
+
+- Live and working on `thinkpad`. Logged into "Xfce with i3", panel +
+  tray + tap-Super launcher all confirmed. Committed.
 
 ## Backlog: candidate next bricks
 

@@ -1,0 +1,140 @@
+# i3 config - hand-written, lean. Stowed from dotfiles/i3.
+#
+# Phase 1: i3 is opt-in, swapped in/out via Super+Shift+W (toggle-wm).
+# Logging out resets to xfwm4 by default, so nothing here is sticky.
+#
+# Conventions:
+#   Super         = focus / navigation
+#   Super+Shift   = move / send / "more powerful" variant
+#   Super+letter  = XFCE-mirrored app launch (same chord works in xfwm4)
+#
+# Where i3's default Super+letter conflicts with an XFCE app-launch
+# chord (Super+F = thunar, Super+E = code), the i3 action is shifted to
+# Super+Shift+letter so the cross-WM muscle memory stays consistent.
+
+set $mod Mod4
+
+# pango is fine here; only used for window titles and i3bar.
+font pango:monospace 10
+
+# Mouse+Super drags floating windows (i3 default; keep it).
+floating_modifier $mod
+
+#=============================================================================
+# Focus + move (the bread and butter)
+#=============================================================================
+
+bindsym $mod+Left  focus left
+bindsym $mod+Down  focus down
+bindsym $mod+Up    focus up
+bindsym $mod+Right focus right
+
+bindsym $mod+Shift+Left  move left
+bindsym $mod+Shift+Down  move down
+bindsym $mod+Shift+Up    move up
+bindsym $mod+Shift+Right move right
+
+#=============================================================================
+# Splits + layouts
+#=============================================================================
+
+# Split direction. Super+H splits horizontally (next window lands to
+# the right). i3's default Super+V is taken by the XFCE-mirrored
+# vivaldi launch below, so split-vertical lives on Super+Shift+V.
+bindsym $mod+h split h
+bindsym $mod+Shift+v split v
+
+# Layouts. Stacking + tabbed are i3's bread-and-butter.
+bindsym $mod+s layout stacking
+bindsym $mod+t layout tabbed
+
+# Fullscreen on Super+Shift+F (Super+F is thunar, mirrored from XFCE).
+bindsym $mod+Shift+f fullscreen toggle
+
+# Toggle floating / focus between floating and tiling.
+bindsym $mod+Shift+space floating toggle
+bindsym $mod+space focus mode_toggle
+
+#=============================================================================
+# Workspaces
+#=============================================================================
+
+bindsym $mod+1 workspace number 1
+bindsym $mod+2 workspace number 2
+bindsym $mod+3 workspace number 3
+bindsym $mod+4 workspace number 4
+bindsym $mod+5 workspace number 5
+bindsym $mod+6 workspace number 6
+bindsym $mod+7 workspace number 7
+bindsym $mod+8 workspace number 8
+bindsym $mod+9 workspace number 9
+
+bindsym $mod+Shift+1 move container to workspace number 1
+bindsym $mod+Shift+2 move container to workspace number 2
+bindsym $mod+Shift+3 move container to workspace number 3
+bindsym $mod+Shift+4 move container to workspace number 4
+bindsym $mod+Shift+5 move container to workspace number 5
+bindsym $mod+Shift+6 move container to workspace number 6
+bindsym $mod+Shift+7 move container to workspace number 7
+bindsym $mod+Shift+8 move container to workspace number 8
+bindsym $mod+Shift+9 move container to workspace number 9
+
+#=============================================================================
+# Resize mode (Super+R -> arrows -> Enter/Esc to exit)
+#=============================================================================
+
+mode "resize" {
+    bindsym Left  resize shrink width  10 px or 10 ppt
+    bindsym Down  resize grow   height 10 px or 10 ppt
+    bindsym Up    resize shrink height 10 px or 10 ppt
+    bindsym Right resize grow   width  10 px or 10 ppt
+    bindsym Return mode "default"
+    bindsym Escape mode "default"
+}
+bindsym $mod+r mode "resize"
+
+#=============================================================================
+# Window + session actions
+#=============================================================================
+
+bindsym $mod+q kill
+bindsym $mod+Shift+r restart
+bindsym $mod+Shift+c reload
+
+# Exit i3 -- ends the X session and drops back to LightDM. Confirms via
+# i3-nagbar first so it can't be an accidental session-kill. This is the
+# in-session escape hatch back to the "Xfce Session" picker.
+bindsym $mod+Shift+e exec i3-nagbar -t warning -m 'Exit i3 and end the X session?' -B 'Exit i3' 'i3-msg exit'
+
+#=============================================================================
+# Launches (mirror the XFCE bindings from setup/76-app-hotkeys.sh)
+#=============================================================================
+
+# Terminal via XFCE's preferred-terminal helper -- whatever you've set
+# system-wide is what i3 launches.
+bindsym $mod+Return exec exo-open --launch TerminalEmulator
+
+bindsym $mod+c   exec galculator
+bindsym $mod+e   exec code
+bindsym $mod+v   exec vivaldi
+bindsym $mod+f   exec bash -c 'thunar "$HOME"'
+bindsym $mod+p   exec xfce4-display-settings --minimal
+bindsym $mod+F12 exec ulauncher-toggle
+
+# Cheatsheet -- floating terminal viewer for ~/.config/i3/CHEATSHEET.md.
+# Bound to Super+? (Super+Shift+slash), the conventional help chord --
+# deliberately not an F-key, since those are flaky on the BT keyboard.
+# Title is used by the for_window rule below so this terminal opens
+# floating + centered, no matter the current layout.
+bindsym $mod+Shift+slash exec bash -c 'xfce4-terminal --title="i3-cheatsheet" -e "less $HOME/.config/i3/CHEATSHEET.md"'
+
+for_window [title="^i3-cheatsheet$"] floating enable, resize set 900 700, move position center
+
+#=============================================================================
+# Status bar
+#=============================================================================
+
+bar {
+    status_command i3status
+    position bottom
+}
