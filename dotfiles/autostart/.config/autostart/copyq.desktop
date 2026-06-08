@@ -1,0 +1,12 @@
+[Desktop Entry]
+# Launch the CopyQ clipboard-history daemon at session start. The Debian
+# copyq package ships no autostart of its own, so without this file the
+# Super+P hotkey fires `copyq toggle` against nothing. Stowed from this
+# repo. Works under both Xfce-Session (xfce4-session autostart) and
+# "Xfce with i3" (dex --autostart in setup/87-i3.sh).
+Type=Application
+Name=CopyQ
+Exec=copyq
+Icon=com.github.hluk.copyq
+X-GNOME-Autostart-enabled=true
+NoDisplay=true

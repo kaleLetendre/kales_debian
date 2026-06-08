@@ -59,7 +59,7 @@ Enter resize mode, then arrows resize, then `Enter`/`Esc` to exit.
 | `Super+E` | VS Code |
 | `Super+V` | Vivaldi |
 | `Super+F` | Thunar (home dir) |
-| `Super+P` | display settings |
+| `Super+P` | CopyQ clipboard history (floating, centered on focused output) |
 | tap `Super` | ulauncher (via xcape; Super+F12 is the internal trigger) |
 | `Super+?` | open this cheatsheet (Super+Shift+/) |
 

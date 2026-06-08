@@ -143,7 +143,7 @@ bindsym $mod+c   exec galculator
 bindsym $mod+e   exec code
 bindsym $mod+v   exec vivaldi
 bindsym $mod+f   exec bash -c 'thunar "$HOME"'
-bindsym $mod+p   exec xfce4-display-settings --minimal
+bindsym $mod+p   exec copyq toggle
 bindsym $mod+F12 exec ulauncher-toggle
 
 # Cheatsheet -- floating terminal viewer for ~/.config/i3/CHEATSHEET.md.
@@ -154,6 +154,12 @@ bindsym $mod+F12 exec ulauncher-toggle
 bindsym $mod+Shift+slash exec bash -c 'xfce4-terminal --title="i3-cheatsheet" -e "less $HOME/.config/i3/CHEATSHEET.md"'
 
 for_window [title="^i3-cheatsheet$"] floating enable, resize set 900 700, move position center
+
+# CopyQ clipboard window -- Super+P opens `copyq toggle`; force it to
+# float, sized + centered on the focused output (i3's `move position
+# center` centers on the current output, not under the cursor). WM_CLASS
+# is "copyq"/"Copyq" -- match case-insensitively in case it ever shifts.
+for_window [class="(?i)copyq"] floating enable, resize set 700 500, move position center
 
 #=============================================================================
 # Status bar

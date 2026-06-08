@@ -16,8 +16,16 @@ log() { printf "  -> %s\n" "$*"; }
 BINDINGS=(
     "<Super>c|galculator"
     "<Super>e|code"
+    "<Super>n|mousepad"
     "<Super>v|vivaldi"
     "<Super>f|bash -c 'thunar \"\$HOME\"'"
+    # CopyQ clipboard window. Overrides XFCE's default Super+P
+    # (xfce4-display-settings --minimal); we don't reach for that often.
+    # Under the i3 session a `for_window` rule floats + centers it
+    # (dotfiles/i3/.config/i3/config); under xfwm4 it opens as a normal
+    # window. `toggle` opens/closes the main UI; `menu` would pop at the
+    # cursor instead, but cursor-anchored felt wrong.
+    "<Super>p|copyq toggle"
 )
 
 if ! command -v xfconf-query >/dev/null 2>&1; then
