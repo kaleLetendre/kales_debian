@@ -55,6 +55,13 @@ fi
 # re-running this is a no-op.
 git config --global "includeIf.gitdir:${CARACAL_DIR}.path" "$CARACAL_GITCONFIG"
 
+# 1c. Rewrite https://github.com/ clones to use SSH transparently. Once SSH
+#     auth is set up (sections 3-6 below), this makes `git clone https://...`
+#     of any GitHub repo silently route through the personal key instead of
+#     falling back to HTTPS + PAT auth (which GitHub has been deprecating).
+#     git config dedupes by key, so re-running is a no-op.
+git config --global url."git@github.com:".insteadOf "https://github.com/"
+
 # 2. SSH dir.
 mkdir -p "$SSH_DIR"
 chmod 700 "$SSH_DIR"
