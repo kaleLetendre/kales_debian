@@ -27,7 +27,21 @@ log "installing zsh, fzf, zoxide"
 $SUDO apt-get update
 $SUDO apt-get install -y zsh fzf zoxide
 
-# 2. Make zsh the login shell for this user. apt's zsh postinst registers
+# 2. fzf-tab: not in Debian apt, so hand-clone into the XDG data dir. The
+#    brick dotfiles/zsh/.zshrc.d/40-fzf-tab.zsh sources the plugin from
+#    this exact path. Idempotent: clone if missing, leave existing
+#    checkouts alone -- no silent auto-pull on every bootstrap; pull
+#    manually if you want to update.
+fzf_tab_dir="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/fzf-tab"
+if [[ ! -d "$fzf_tab_dir/.git" ]]; then
+    log "cloning fzf-tab into $fzf_tab_dir"
+    mkdir -p "$(dirname "$fzf_tab_dir")"
+    git clone https://github.com/Aloxaf/fzf-tab "$fzf_tab_dir"
+else
+    log "fzf-tab already cloned at $fzf_tab_dir"
+fi
+
+# 3. Make zsh the login shell for this user. apt's zsh postinst registers
 #    /usr/bin/zsh in /etc/shells, which chsh requires. Running chsh under
 #    sudo avoids the interactive password prompt.
 zsh_path="$(command -v zsh)"
