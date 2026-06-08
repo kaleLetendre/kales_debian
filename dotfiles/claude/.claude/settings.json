@@ -2,5 +2,40 @@
   "env": {
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
   },
-  "theme": "dark"
+  "permissions": {
+    "allow": [
+      "mcp__jira__jira_get",
+      "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-44-55-587Z-2c82644e.txt architecture/tms-api-documentation.md \"TMS API Documentation\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3012100134\")",
+      "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-44-57-457Z-55f68be7.txt architecture/tms-server-requirements.md \"TMS Server Requirements Specification\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3014557703\")",
+      "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-45-00-013Z-5adc3cfb.txt communication/tms-rabbitmq.md \"TMS RabbitMQ Documentation\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3013509155\")",
+      "Bash(python3:*)",
+      "WebFetch(domain:www.debian.org)",
+      "WebFetch(domain:www.chromium.org)",
+      "WebFetch(domain:beta.apple.com)",
+      "WebSearch",
+      "WebFetch(domain:sre.google)",
+      "WebFetch(domain:spinnaker.io)",
+      "WebFetch(domain:support.google.com)",
+      "WebFetch(domain:netflixtechblog.com)",
+      "WebFetch(domain:www.industrialempathy.com)",
+      "WebFetch(domain:vercel.com)",
+      "Bash(git ls-tree *)",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__getJiraIssue"
+    ],
+    "defaultMode": "auto"
+  },
+  "enabledPlugins": {
+    "shipyard@acendas": true
+  },
+  "extraKnownMarketplaces": {
+    "acendas": {
+      "source": {
+        "source": "github",
+        "repo": "Acendas/acendas-marketplace"
+      }
+    }
+  },
+  "theme": "dark",
+  "skipAutoPermissionPrompt": true
 }
