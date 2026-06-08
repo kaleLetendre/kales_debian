@@ -131,6 +131,18 @@ bindsym $mod+Shift+c reload
 # in-session escape hatch back to the "Xfce Session" picker.
 bindsym $mod+Shift+e exec i3-nagbar -t warning -m 'Exit i3 and end the X session?' -B 'Exit i3' 'i3-msg exit'
 
+# System power. logind permits these for an active local-seat user
+# (CanPowerOff/Reboot/Suspend = yes) -- no polkit prompt, no
+# xfce4-session dependency. This is why the XFCE panel's greyed Action
+# Buttons can't drive them (the plugin gates on org.xfce.SessionManager
+# which a pure-i3 session doesn't run); these binds bypass that.
+# Reboot is on 'b' (for "boot") because Super+Shift+r is i3's own
+# in-place restart above. Suspend has no confirm because waking is one
+# keypress away.
+bindsym $mod+Shift+p exec i3-nagbar -t warning -m 'Power off the machine?' -B 'Power off' 'systemctl poweroff'
+bindsym $mod+Shift+b exec i3-nagbar -t warning -m 'Reboot the machine?' -B 'Reboot' 'systemctl reboot'
+bindsym $mod+Shift+s exec systemctl suspend
+
 #=============================================================================
 # Launches (mirror the XFCE bindings from setup/76-app-hotkeys.sh)
 #=============================================================================

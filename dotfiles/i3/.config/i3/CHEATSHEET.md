@@ -48,7 +48,10 @@ Enter resize mode, then arrows resize, then `Enter`/`Esc` to exit.
 | `Super+Q` | kill focused window |
 | `Super+Shift+R` | restart i3 (preserves layout) |
 | `Super+Shift+C` | reload i3 config |
-| `Super+Shift+E` | exit i3 → back to LightDM (asks to confirm) |
+| `Super+Shift+E` | log out — exit i3, end the X session, back to LightDM (asks to confirm) |
+| `Super+Shift+S` | suspend the machine (no confirm — waking is one keypress) |
+| `Super+Shift+P` | **p**ower off the machine (asks to confirm) |
+| `Super+Shift+B` | re**b**oot the machine (asks to confirm; `b` because `Super+Shift+R` is taken) |
 
 ## App launches (mirrored from your XFCE bindings)
 
