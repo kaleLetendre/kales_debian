@@ -1,0 +1,11 @@
+[Desktop Entry]
+# Per-user override that suppresses the system /etc/xdg/autostart/nm-applet.desktop.
+# Stowed from this repo. Why: Debian's nm-applet only docks as legacy XEMBED,
+# and xfce4-panel 4.20's tray plugin will not claim _NET_SYSTEM_TRAY_S0 in
+# this session, so the icon never appears. We use nm-tray (SNI-native) for
+# the network indicator instead -- see setup/87-i3.sh.
+Type=Application
+Name=Network applet
+Hidden=true
+NoDisplay=true
+X-GNOME-Autostart-enabled=false
