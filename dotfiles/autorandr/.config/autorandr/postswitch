@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# autorandr postswitch hook: realign i3 workspaces with the current
+# output set after any layout change. i3's `workspace N output ...`
+# directives only fire at workspace creation, so pre-existing workspaces
+# don't migrate when monitors come and go. Move them explicitly.
+#
+# No-op when i3 isn't the current WM (xfwm4 session, login screen).
+
+set -eu
+
+command -v i3-msg >/dev/null || exit 0
+pgrep -x i3 >/dev/null || exit 0
+
+# Snapshot focused workspace -- `move workspace to output` only acts on
+# the focused workspace, so we switch through each one in turn and need
+# to restore focus at the end.
+focused=$(i3-msg -t get_workspaces | python3 -c '
+import json, sys
+ws = json.load(sys.stdin)
+print(next((w["name"] for w in ws if w["focused"]), ""))
+')
+
+# Only move workspaces that already exist; `workspace number N` would
+# otherwise create an empty workspace as a side effect.
+existing=$(i3-msg -t get_workspaces | python3 -c '
+import json, sys
+print(" ".join(str(w["num"]) for w in json.load(sys.stdin)))
+')
+
+move() {
+    local num=$1 out=$2
+    case " $existing " in *" $num "*) ;; *) return 0 ;; esac
+    i3-msg "workspace number $num; move workspace to output $out" >/dev/null
+}
+
+move 1 primary
+move 2 primary
+move 3 "nonprimary primary"
+move 4 "nonprimary primary"
+
+[ -n "$focused" ] && i3-msg "workspace $focused" >/dev/null || true
