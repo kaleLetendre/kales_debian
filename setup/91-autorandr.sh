@@ -33,13 +33,16 @@ sudo apt-get install -y autorandr
 # isn't fully enumerated yet. autorandr then sees no matching profile,
 # exits without switching, and the i3 postswitch hook never runs -- so
 # workspaces stay on the wrong outputs even though the layout is "right".
-# A 2s ExecStartPre sleep lets DRM settle before autorandr inspects it.
+# Sleep before inspecting so DRM has time to settle. 2s was not enough on
+# the Precision 3591 + Dell S3225QS over HDMI -- every hotplug event lost
+# the race and committed to the laptop-only profile, leaving the system
+# with both panels lit but no primary set. 5s has held.
 # Drop-in lives in /etc (not /usr/lib) so package upgrades don't clobber.
 log "autorandr hotplug delay drop-in"
 sudo install -d -m 755 /etc/systemd/system/autorandr.service.d
 sudo tee /etc/systemd/system/autorandr.service.d/hotplug-delay.conf >/dev/null <<'EOF'
 # Managed by kales_debian/setup/91-autorandr.sh
 [Service]
-ExecStartPre=/bin/sleep 2
+ExecStartPre=/bin/sleep 5
 EOF
 sudo systemctl daemon-reload
