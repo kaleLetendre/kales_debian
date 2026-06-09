@@ -17,6 +17,9 @@ Open this anytime inside i3 with **Super+?** (Super+Shift+/).
 | --- | --- |
 | `Super+1`..`9` | switch to workspace N |
 | `Super+Shift+1`..`9` | send focused window to workspace N |
+| numpad `1`..`9` (NumLock **off**) | switch to workspace N — bare, no Super |
+| `Super+`numpad `1`..`9` (NumLock **on**) | switch to workspace N while still typing digits |
+| `Super+Shift+`numpad `1`..`9` (NumLock **on**) | send focused window to workspace N |
 
 ## Resize
 
@@ -72,6 +75,14 @@ Enter resize mode, then arrows resize, then `Enter`/`Esc` to exit.
 | --- | --- |
 | `Super` + drag a floating window | move it |
 | `Super` + right-drag a floating window | resize it |
+
+## Recovery commands
+
+Things that fix common busted states. Run from any terminal.
+
+| Command | When |
+| --- | --- |
+| `autorandr --change` | workspaces 3/4 stuck on the laptop panel (or anything wrong with monitor layout after a hotplug) — re-detects the connected EDID set, re-applies the matching profile, postswitch hook moves workspaces |
 
 ## Emergency exit
 
