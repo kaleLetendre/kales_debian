@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
-# 30-claude-code.sh - install Claude Code from Anthropic's signed apt repo.
-# Idempotent. Uses apt (not the curl-bash native installer) so the binary
-# lands in /usr/bin, no ~/.local/bin PATH wrangling needed.
+# 30-claude-code.sh - install Claude Code via Anthropic's native installer.
 #
-# Repo + key per https://code.claude.com/docs/en/setup. Expected GPG
-# fingerprint pinned in this script; if Anthropic rotates the key, this
-# script fails loudly rather than silently trusting a new key.
+# Why native, not apt: the apt package lagged badly - we were stuck ~two model
+# releases behind because the signed apt repo updates far slower than the
+# release channel. The native install drops a self-updating binary in
+# ~/.local/bin/claude that auto-updates in the background on the `latest`
+# channel, so it picks up new versions as soon as they ship. Docs:
+# https://code.claude.com/docs/en/setup
+#
+# This module also MIGRATES an existing apt install: if the claude-code
+# package or its repo/key is present it removes them, so /usr/bin/claude
+# doesn't linger and fight ~/.local/bin/claude on PATH. Idempotent.
 
 set -euo pipefail
 
@@ -15,62 +20,42 @@ if [[ $EUID -ne 0 ]]; then SUDO="sudo"; fi
 
 log() { printf "  -> %s\n" "$*"; }
 
-KEYRING_DIR="/etc/apt/keyrings"
-KEY_PATH="$KEYRING_DIR/claude-code.asc"
+# ~/.local/bin is prepended to PATH by dotfiles/zsh/.zshrc.d/05-path.zsh,
+# so the native binary takes precedence over anything in /usr/bin.
+BIN="$HOME/.local/bin/claude"
 LIST_PATH="/etc/apt/sources.list.d/claude-code.list"
-KEY_URL="https://downloads.claude.ai/keys/claude-code.asc"
-EXPECTED_FPR="31DDDE24DDFAB679F42D7BD2BAA929FF1A7ECACE"
-REPO_LINE="deb [signed-by=$KEY_PATH] https://downloads.claude.ai/claude-code/apt/stable stable main"
+KEY_PATH="/etc/apt/keyrings/claude-code.asc"
 
-# 1. Keyring directory (apt convention since Debian 12).
-if [[ ! -d "$KEYRING_DIR" ]]; then
-    log "creating $KEYRING_DIR"
-    $SUDO install -d -m 0755 "$KEYRING_DIR"
+# 1. Tear down the old apt install if it's here. The apt binary lands in
+#    /usr/bin/claude; we want the self-updating ~/.local/bin/claude to own
+#    the name. Each check is guarded so re-runs are no-ops once it's gone.
+if dpkg -s claude-code >/dev/null 2>&1; then
+    log "removing old apt claude-code package"
+    $SUDO apt-get remove -y claude-code
+fi
+if [[ -f "$LIST_PATH" ]]; then
+    log "removing old apt repo $LIST_PATH"
+    $SUDO rm -f "$LIST_PATH"
+fi
+if [[ -f "$KEY_PATH" ]]; then
+    log "removing old apt signing key $KEY_PATH"
+    $SUDO rm -f "$KEY_PATH"
 fi
 
-# 2. Fetch and pin the signing key.
-if [[ ! -f "$KEY_PATH" ]]; then
-    log "downloading Claude Code signing key"
-    $SUDO curl -fsSL "$KEY_URL" -o "$KEY_PATH"
+# 2. Native install. The installer itself is idempotent (re-running just
+#    pulls the latest build), but once the binary exists we skip the network
+#    fetch - background auto-update keeps it current from then on.
+if [[ -x "$BIN" ]]; then
+    log "native claude already installed at $BIN (auto-updates in background)"
+else
+    log "installing Claude Code via native installer"
+    curl -fsSL https://claude.ai/install.sh | bash
 fi
 
-# 3. Verify fingerprint. gpg prints fingerprints with spaces; strip and
-#    compare against the pinned value. Bail hard if it doesn't match.
-got_fpr="$(gpg --show-keys --with-colons "$KEY_PATH" 2>/dev/null \
-    | awk -F: '$1 == "fpr" {print $10; exit}')"
-if [[ "$got_fpr" != "$EXPECTED_FPR" ]]; then
-    echo "FATAL: Claude Code key fingerprint mismatch." >&2
-    echo "  expected: $EXPECTED_FPR" >&2
-    echo "  got:      $got_fpr" >&2
-    echo "Remove $KEY_PATH and re-run after verifying upstream key rotation." >&2
-    exit 1
-fi
-
-# 4. Sources list entry.
-if [[ ! -f "$LIST_PATH" ]] || ! grep -qF "$REPO_LINE" "$LIST_PATH"; then
-    log "writing $LIST_PATH"
-    echo "$REPO_LINE" | $SUDO tee "$LIST_PATH" >/dev/null
-fi
-
-# 5. Install. apt-get install -y is idempotent.
-log "apt update"
-$SUDO apt-get update
-log "installing claude-code"
-$SUDO apt-get install -y claude-code
-
-# 6. Ensure ~/.claude exists as a real directory before dotfiles stow runs.
+# 3. Ensure ~/.claude exists as a real directory before dotfiles stow runs.
 #    Without this, `stow` would tree-fold the entire dotfiles/claude/.claude
-#    package into a single symlink at ~/.claude, and claude-code's
-#    runtime state (history.jsonl, sessions/, .credentials.json) would
-#    start landing inside the repo. Creating the dir up front forces stow
-#    to fold at file level instead, so only the tracked files (CLAUDE.md,
-#    settings.json) become symlinks.
+#    package into a single symlink at ~/.claude, and claude-code's runtime
+#    state (history.jsonl, sessions/, .credentials.json) would start landing
+#    inside the repo. Creating the dir up front forces stow to fold at file
+#    level, so only the tracked files (CLAUDE.md, settings.json) get symlinked.
 mkdir -p "$HOME/.claude"
-
-# 7. Heads-up if a pre-existing native install at ~/.local/bin/claude
-#    shadows the apt-installed binary on PATH. Don't auto-delete; that's
-#    destructive and the user may have history/sessions tied to it.
-if [[ -e "$HOME/.local/bin/claude" ]] && [[ "$(command -v claude || true)" != "/usr/bin/claude" ]]; then
-    log "note: ~/.local/bin/claude shadows the apt install on PATH"
-    log "      to clean up: rm -f ~/.local/bin/claude && rm -rf ~/.local/share/claude"
-fi

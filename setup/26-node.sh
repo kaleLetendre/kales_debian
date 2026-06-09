@@ -10,8 +10,8 @@
 # Why apt over NodeSource / fnm / nvm: simplest signed install, no extra
 # repo to babysit, no shell-init complexity. If a project ever needs a
 # newer node than Debian ships, revisit by adding a NodeSource module
-# (same pattern as 30-claude-code.sh) -- don't paper over it with a
-# per-user version manager.
+# (signed apt repo + pinned key) -- don't paper over it with a per-user
+# version manager.
 
 set -euo pipefail
 
