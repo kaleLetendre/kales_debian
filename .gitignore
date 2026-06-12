@@ -1,6 +1,9 @@
 # Never commit secrets, even on a private repo.
 secrets/
 
+# Per-machine role choice (client|server), written by bootstrap.sh's menu.
+.role
+
 # Editor backups
 *.swp
 *.swo
