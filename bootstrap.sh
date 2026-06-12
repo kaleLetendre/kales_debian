@@ -57,6 +57,11 @@ if [[ "$ROLE" != "client" && "$ROLE" != "server" ]]; then
     ROLE="client"
 fi
 printf '%s\n' "$ROLE" > "$ROLE_FILE"
+# Mirror the role to a stable path in $HOME so runtime consumers that don't
+# know where the repo lives (e.g. the zsh prompt) can read it. ROLE_FILE is
+# repo-relative and gitignored; this marker is the runtime-facing copy.
+mkdir -p "$HOME/.config/kales"
+printf '%s\n' "$ROLE" > "$HOME/.config/kales/role"
 log "role: $ROLE"
 
 # Setup modules. Numbered prefix controls order. Each must be idempotent.

@@ -12,6 +12,17 @@
 #                %d   - raw absolute path (/home/kl/kales_debian)
 #                %1~  - last segment only (kales_debian)
 #
+#   %F{blue}..%f  set foreground colour to blue, then reset. Native prompt
+#                 colour tokens, no PROMPT_SUBST needed.
+#
 # Trailing space after the colon so typed commands don't touch it.
+#
+# On a server (role marker written by bootstrap.sh) prepend a blue `S` so an
+# SSH session into the box is unmistakable at a glance. Clients get the plain
+# prompt. The marker lives at ~/.config/kales/role; absent == client.
 
-PROMPT='%D{%H:%M}|%~: '
+if [[ -r "$HOME/.config/kales/role" && "$(<"$HOME/.config/kales/role")" == server ]]; then
+    PROMPT='%F{blue}S%f %D{%H:%M}|%~: '
+else
+    PROMPT='%D{%H:%M}|%~: '
+fi
