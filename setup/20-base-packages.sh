@@ -13,6 +13,8 @@ log "apt update"
 $SUDO apt-get update
 
 log "base packages"
+# jq parses JSON on the command line -- the Claude Code status line
+# (dotfiles/claude/.claude/statusline.sh) pipes its input through it.
 # python3 ships by default on Debian, but `venv` and `pip` are split into
 # separate packages -- without them, `python3 -m venv` produces a broken
 # venv with no pip inside. Both are needed for any project that bootstraps
@@ -24,6 +26,7 @@ $SUDO apt-get install -y \
     ca-certificates \
     gnupg \
     stow \
+    jq \
     htop \
     tmux \
     build-essential \

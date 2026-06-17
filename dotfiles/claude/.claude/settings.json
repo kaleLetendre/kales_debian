@@ -25,6 +25,10 @@
     ],
     "defaultMode": "auto"
   },
+  "statusLine": {
+    "type": "command",
+    "command": "bash /home/kl/.claude/statusline.sh"
+  },
   "enabledPlugins": {
     "shipyard@acendas": true
   },
