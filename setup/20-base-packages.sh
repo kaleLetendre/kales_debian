@@ -19,6 +19,12 @@ log "base packages"
 # separate packages -- without them, `python3 -m venv` produces a broken
 # venv with no pip inside. Both are needed for any project that bootstraps
 # itself into a venv (e.g. ./install.sh scripts that pip install -r ...).
+#
+# kitty-terminfo provides the `xterm-kitty` terminfo entry. The local
+# terminal is kitty, which sets TERM=xterm-kitty; SSHing into a box that
+# lacks this entry breaks everything that reads terminfo (clear, tput,
+# vim, less) with `'xterm-kitty': unknown terminal type`. It's a tiny
+# data-only package (no kitty binary), so it's safe on servers too.
 $SUDO apt-get install -y \
     git \
     curl \
@@ -32,4 +38,5 @@ $SUDO apt-get install -y \
     build-essential \
     postgresql-client \
     python3-venv \
-    python3-pip
+    python3-pip \
+    kitty-terminfo
