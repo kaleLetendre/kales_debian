@@ -67,11 +67,19 @@ bindsym $mod+space focus mode_toggle
 # Multi-monitor
 #=============================================================================
 
-# Pin the internal laptop panel as the primary output. eDP-1 is the
-# internal panel on both the ThinkPad and the Dell Precision. (i3's
-# primary/nonprimary keywords below need a primary to be set.) Harmless
-# no-op on a machine without eDP-1.
-exec_always --no-startup-id xrandr --output eDP-1 --primary
+# Apply the autorandr layout for the currently-connected monitors at
+# session start. This is what fixes monitors "not working" after login:
+# XFCE's displays.xml sets the geometry at boot but never marks a primary
+# output (so i3's primary/nonprimary rules below can't resolve) and may
+# pick the wrong external mode. autorandr already has the geometry the
+# layout wants, so plain `--change` treats it as "loaded" and skips its
+# postswitch hook -- workspaces 3-4 stay stranded on the laptop. --force
+# makes it re-apply the saved profile (which sets eDP-1 primary) and run
+# the postswitch hook (which migrates workspaces onto the right outputs).
+# Hotplug while logged in is handled separately by autorandr's udev rule.
+# Plain `exec` (startup only, not exec_always) so reloading the i3 config
+# doesn't re-run xrandr and flicker the screen.
+exec --no-startup-id autorandr --change --force
 
 # Workspace -> output assignment. 1-2 live on the laptop (primary);
 # 3-4 prefer the external monitor (nonprimary) and fall back to the
@@ -197,9 +205,10 @@ bindsym $mod+Shift+s exec systemctl suspend
 # Launches (mirror the XFCE bindings from setup/76-app-hotkeys.sh)
 #=============================================================================
 
-# Terminal via XFCE's preferred-terminal helper -- whatever you've set
-# system-wide is what i3 launches.
-bindsym $mod+Return exec exo-open --launch TerminalEmulator
+# Terminal. kitty is installed + themed by setup/60-terminal.sh; bind
+# directly rather than going through exo-open so this is decoupled from
+# XFCE's preferred-applications setting.
+bindsym $mod+Return exec kitty
 
 bindsym $mod+c   exec galculator
 bindsym $mod+e   exec code
@@ -213,7 +222,7 @@ bindsym $mod+F12 exec ulauncher-toggle
 # deliberately not an F-key, since those are flaky on the BT keyboard.
 # Title is used by the for_window rule below so this terminal opens
 # floating + centered, no matter the current layout.
-bindsym $mod+Shift+slash exec bash -c 'xfce4-terminal --title="i3-cheatsheet" -e "less $HOME/.config/i3/CHEATSHEET.md"'
+bindsym $mod+Shift+slash exec bash -c 'kitty --title="i3-cheatsheet" -- less $HOME/.config/i3/CHEATSHEET.md'
 
 for_window [title="^i3-cheatsheet$"] floating enable, resize set 900 700, move position center
 
@@ -228,6 +237,6 @@ for_window [class="(?i)copyq"] floating enable, resize set 700 500, move positio
 #=============================================================================
 
 bar {
-    status_command i3status
+    status_command ~/.config/i3/statusline.sh
     position bottom
 }

@@ -60,7 +60,7 @@ Enter resize mode, then arrows resize, then `Enter`/`Esc` to exit.
 
 | Chord | Action |
 | --- | --- |
-| `Super+Enter` | open terminal (XFCE default) |
+| `Super+Enter` | open terminal (kitty) |
 | `Super+C` | galculator |
 | `Super+E` | VS Code |
 | `Super+V` | Vivaldi |
