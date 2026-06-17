@@ -4,6 +4,9 @@ secrets/
 # Per-machine role choice (client|server), written by bootstrap.sh's menu.
 .role
 
+# Shipyard plugin scratch (symlink into ~/.claude plugin data). Never tracked.
+.shipyard
+
 # Editor backups
 *.swp
 *.swo
