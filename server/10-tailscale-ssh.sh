@@ -30,6 +30,23 @@ if [[ $EUID -ne 0 ]]; then SUDO="sudo"; fi
 
 log() { printf "  -> %s\n" "$*"; }
 
+# Safety guard. This layer EXPOSES the machine: it installs + enables sshd
+# and brings Tailscale up with shields DOWN (incoming allowed). bootstrap.sh
+# only runs server/ when the role is `server`, but running this file directly
+# bypasses that gate -- an easy way to accidentally turn a laptop into a
+# reachable server. Refuse unless the role marker actually says `server`.
+# The marker is read relative to this script, so it works under sudo too.
+# Override with KALES_FORCE_SERVER=1 if you genuinely mean to.
+REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROLE=""
+[[ -r "$REPO_DIR/.role" ]] && ROLE="$(cat "$REPO_DIR/.role")"
+if [[ "${KALES_FORCE_SERVER:-}" != "1" && "$ROLE" != "server" ]]; then
+    echo "Refusing to run the server layer: role is '${ROLE:-unset}', not 'server'." >&2
+    echo "This would expose the box (sshd listening + Tailscale shields down)." >&2
+    echo "Set the role via bootstrap.sh, or re-run with KALES_FORCE_SERVER=1." >&2
+    exit 1
+fi
+
 TS_HOSTNAME="homeserver"
 
 # 1. OpenSSH server -- this is what actually answers the SSH connection.
