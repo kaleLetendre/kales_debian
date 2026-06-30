@@ -55,6 +55,8 @@ move 1 "$primary"
 move 2 "$primary"
 move 3 "$external"
 move 4 "$external"
+move 5 "$external"
+move 6 "$external"
 
 # Best-effort focus restore; ignore failure if that workspace is gone.
 [ -n "$focused" ] && i3-msg "workspace $focused" >/dev/null || true

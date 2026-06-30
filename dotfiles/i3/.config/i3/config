@@ -82,8 +82,8 @@ bindsym $mod+space focus mode_toggle
 exec --no-startup-id autorandr --change --force
 
 # Workspace -> output assignment. 1-2 live on the laptop (primary);
-# 3-4 prefer the external monitor (nonprimary) and fall back to the
-# laptop when nothing is plugged in. 5-9 are unassigned and open on
+# 3-6 prefer the external monitor (nonprimary) and fall back to the
+# laptop when nothing is plugged in. 7-9 are unassigned and open on
 # whichever output is currently focused. primary / nonprimary are
 # resolved by i3 at runtime, so this stays machine-independent -- no
 # hard-coded HDMI/DP output names.
@@ -91,10 +91,13 @@ exec --no-startup-id autorandr --change --force
 # Caveat: i3 only applies these rules when a workspace is created.
 # Pre-existing workspaces don't migrate on hotplug -- that's what the
 # autorandr postswitch hook (dotfiles/autorandr/.../postswitch) fixes.
+# Keep that hook's move list (1-6) in sync with the assignments here.
 workspace 1 output primary
 workspace 2 output primary
 workspace 3 output nonprimary primary
 workspace 4 output nonprimary primary
+workspace 5 output nonprimary primary
+workspace 6 output nonprimary primary
 
 #=============================================================================
 # Workspaces
