@@ -1,0 +1,14 @@
+{
+  "$schema": "https://www.schemastore.org/claude-code-keybindings.json",
+  "$docs": "https://code.claude.com/docs/en/keybindings",
+  "bindings": [
+    {
+      "//": "Restore Shift+Up/Down = scroll one line in the fullscreen conversation view. Recent Claude Code reassigned Shift+arrow to text selection (selection:extendUp/Down); this puts line-scroll back, matching the kitty scrollback keys (dotfiles/kitty: shift+up/down = scroll_line_up/down). Trade-off: keyboard text-selection on these two keys is given up. PageUp/PageDown still page-scroll.",
+      "context": "Scroll",
+      "bindings": {
+        "shift+up": "scroll:lineUp",
+        "shift+down": "scroll:lineDown"
+      }
+    }
+  ]
+}
