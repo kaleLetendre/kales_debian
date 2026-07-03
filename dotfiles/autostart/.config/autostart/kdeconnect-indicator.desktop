@@ -1,0 +1,14 @@
+[Desktop Entry]
+# Launch the KDE Connect tray indicator at session start. The kdeconnect
+# package autostarts the daemon but not the indicator, so without this file
+# there is no tray icon (and the daemon only spins up on demand). The
+# indicator is SNI-native, which is what this machine's tray expects -- same
+# story as nm-tray (see setup/87-i3.sh). Stowed from this repo. Works under
+# both Xfce-Session (xfce4-session autostart) and "Xfce with i3"
+# (dex --autostart in setup/87-i3.sh).
+Type=Application
+Name=KDE Connect Indicator
+Exec=kdeconnect-indicator
+Icon=kdeconnect
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
