@@ -204,6 +204,21 @@ bindsym $mod+Shift+p exec i3-nagbar -t warning -m 'Power off the machine?' -B 'P
 bindsym $mod+Shift+b exec i3-nagbar -t warning -m 'Reboot the machine?' -B 'Reboot' 'systemctl reboot'
 bindsym $mod+Shift+s exec systemctl suspend
 
+# Lock the screen with i3lock. IMPORTANT: in this session xfsettingsd owns the
+# keyboard-shortcut grabs -- it starts before i3 (see start-xfce-i3 in
+# 87-i3.sh) and grabs Ctrl+Alt+L first, so i3's grab silently loses and THIS
+# bindsym never actually fires. The command that runs is the xfconf one in
+# setup/76-app-hotkeys.sh (<Primary><Alt>l -> i3lock). This line is kept only
+# as a mirror/fallback for a hypothetical i3 session with no xfsettingsd, and
+# to keep the chord documented alongside the others. Same applies to the
+# Super+letter launches above -- xfsettingsd runs those too.
+# The command lives in lock.sh (i3lock-color blur+clock, with a vanilla i3lock
+# fallback). We use the i3lock family, not xflock4: xflock4 locks under xfwm4
+# but no-ops here (its D-Bus Lock to org.xfce.SessionManager finds no
+# xfce4-session). Unlike Super+Shift+S (suspend, which freezes every process),
+# locking leaves everything running.
+bindsym Control+Mod1+l exec --no-startup-id "$HOME/.config/i3/lock.sh"
+
 #=============================================================================
 # Launches (mirror the XFCE bindings from setup/76-app-hotkeys.sh)
 #=============================================================================
