@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# remote-display {on|off|status}
+# Toggle live VNC viewing of this laptop's real :0 desktop (both monitors).
+# Bound to localhost only — reach it from another Tailscale node via an SSH
+# tunnel:  ssh -N -L 5900:localhost:5900 100.73.111.23
+#
+# ON  keeps the panel from DPMS-sleeping so the framebuffer is always live,
+#     then starts x11vnc. This is the "default on" state.
+# OFF restores normal power-saving/blanking and stops x11vnc — run this the
+#     moment you sit down at the machine in person.
+#
+# Stowed from dotfiles/bin. DISPLAY/XAUTHORITY are set explicitly because
+# this is routinely invoked over SSH, where neither is inherited.
+
+export DISPLAY=:0
+export XAUTHORITY="$HOME/.Xauthority"
+
+case "$1" in
+  on)
+    xset s off -dpms s noblank
+    if pgrep -x x11vnc >/dev/null; then
+      echo "x11vnc already running"
+    else
+      x11vnc -display :0 -auth "$XAUTHORITY" -localhost -rfbport 5900 \
+             -nopw -forever -shared -noxdamage -bg -q
+    fi
+    echo "remote-display ON  — x11vnc on localhost:5900, panel sleep disabled"
+    ;;
+  off)
+    pkill -x x11vnc
+    xset s on +dpms
+    echo "remote-display OFF — x11vnc stopped, power-saving restored"
+    ;;
+  status)
+    if pgrep -x x11vnc >/dev/null; then echo "x11vnc: running"; else echo "x11vnc: stopped"; fi
+    xset -q | grep -i "DPMS is"
+    ;;
+  *)
+    echo "usage: remote-display {on|off|status}"
+    exit 1
+    ;;
+esac

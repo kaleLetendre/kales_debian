@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# remote-view {on|off|status}
+# One switch for going remote: toggles the HDMI output AND VNC viewing together.
+#
+# SSH is never touched. sshd is independent of the display, so even with HDMI
+# off you can always `ssh 100.73.111.23` and run `remote-view off` to recover.
+#
+#   on   leaving the desk: HDMI off  -> every workspace collapses onto the
+#        laptop panel (eDP-1) so nothing is stranded on a screen you can't see,
+#        office monitor goes dark, panel kept awake, VNC started.
+#   off  back at the desk: VNC stopped, power-saving restored, HDMI back on
+#        as your second monitor, workspaces 3-9 migrated back onto it.
+#
+# Stowed from dotfiles/bin. DISPLAY/XAUTHORITY are set explicitly because
+# this is routinely invoked over SSH, where neither is inherited.
+
+export DISPLAY=:0
+export XAUTHORITY="$HOME/.Xauthority"
+HDMI=HDMI-1
+
+# Is $HDMI currently driving a mode? xrandr reports a monitor as "connected"
+# even when its output is switched off -- the difference is whether a
+# WxH+X+Y geometry follows, so match on a leading digit.
+hdmi_active() {
+  xrandr --query | grep -qE "^$HDMI connected [0-9]"
+}
+
+case "$1" in
+  on)
+    xrandr --output "$HDMI" --off
+    "$HOME/bin/remote-display" on
+    echo "remote-view ON  — $HDMI off, all workspaces on eDP-1, VNC up. SSH unaffected."
+    ;;
+  off)
+    "$HOME/bin/remote-display" off
+    # Bring the monitor back through autorandr rather than a bare
+    # `xrandr --output $HDMI --auto`, for two reasons:
+    #   1. autorandr re-applies the saved profile's real geometry and marks
+    #      eDP-1 primary, instead of guessing a mode.
+    #   2. it runs its postswitch hook, which is what moves workspaces 3-9
+    #      back off the laptop panel. A raw xrandr call is not a DRM hotplug
+    #      event, so udev never fires autorandr and every workspace stays
+    #      stranded on eDP-1 -- the "my workspaces are all on the laptop"
+    #      bug this branch exists to prevent.
+    # --force because the EDID fingerprint never changed (the monitor was
+    # only switched off, not unplugged), so plain --change considers the
+    # matching profile already loaded and skips both the switch and the hook.
+    autorandr --change --force
+    # Fallback for a monitor autorandr has no saved profile for: put the
+    # output up by hand and realign workspaces directly, so this command
+    # still does what it says away from a known desk.
+    if ! hdmi_active; then
+      echo "remote-view: no autorandr profile matched, falling back to xrandr"
+      xrandr --output "$HDMI" --auto --right-of eDP-1
+      "$HOME/.config/autorandr/postswitch"
+    fi
+    echo "remote-view OFF — $HDMI restored as second monitor, VNC stopped. SSH unaffected."
+    ;;
+  status)
+    "$HOME/bin/remote-display" status
+    echo "--- outputs ---"
+    xrandr --query | grep -E " connected| disconnected"
+    echo "--- ssh (via Tailscale SSH, not port 22) ---"
+    if pgrep -x tailscaled >/dev/null && tailscale debug prefs 2>/dev/null | grep -q '"RunSSH": true'; then
+      echo "ssh: Tailscale SSH active — mesh-only, independent of display, recovery safe"
+    else
+      echo "ssh: Tailscale SSH check FAILED (!) — verify 'tailscale status' before turning HDMI off"
+    fi
+    ;;
+  *)
+    echo "usage: remote-view {on|off|status}"
+    exit 1
+    ;;
+esac

@@ -33,6 +33,7 @@ More than dotfiles. This repo manages:
 ├── hardware/
 │   └── precision-3591.sh    # Dell Precision 3591 specifics
 ├── dotfiles/                # stow packages, symlinked into $HOME
+│   ├── bin/bin/             # personal scripts, symlinked into ~/bin (on PATH)
 │   ├── claude/.claude/      # global CLAUDE.md + settings.json
 │   ├── i3/.config/i3/        # i3 config + cheatsheet (Xfce-with-i3 session)
 │   └── zsh/                  # .zshrc + ~/.zshrc.d/ widgets (built brick by brick)

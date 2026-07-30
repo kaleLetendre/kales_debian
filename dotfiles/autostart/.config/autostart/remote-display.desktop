@@ -1,0 +1,14 @@
+[Desktop Entry]
+# Start localhost-only x11vnc at session start so the desk machine is always
+# viewable from another Tailscale node without walking over to it. The script
+# lives in dotfiles/bin (stowed to ~/bin); see remote-display for the SSH
+# tunnel invocation. Absolute path because .desktop Exec= does not expand
+# $HOME and the session PATH does not reliably include ~/bin.
+# Works under both Xfce-Session and "Xfce with i3" (dex --autostart in
+# setup/87-i3.sh).
+Type=Application
+Name=remote-display
+Comment=Keep :0 live and start localhost-only x11vnc for mesh viewing
+Exec=/home/kl/bin/remote-display on
+X-XFCE-Autostart-enabled=true
+NoDisplay=true
