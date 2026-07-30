@@ -11,10 +11,14 @@
 #   x11-xkb-utils - ships `xev` (read what a key actually emits;
 #                   essential when debugging i3 / xfwm4 bindings) and
 #                   `setxkbmap` (set keyboard layout).
+#   x11-xserver-utils - ships `xsetroot` (paint the X root window) and
+#                   `xrandr`. The i3 config uses `xsetroot -solid` at
+#                   login to blank the root so SDDM's greeter image
+#                   doesn't linger on the desktop; see dotfiles/i3.
 #
 # apt-get install -y is idempotent on already-installed packages, so
 # re-running this script is a no-op.
 
 set -euo pipefail
 
-sudo apt-get install -y xdotool xinput x11-xkb-utils
+sudo apt-get install -y xdotool xinput x11-xkb-utils x11-xserver-utils

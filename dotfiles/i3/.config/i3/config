@@ -81,6 +81,18 @@ bindsym $mod+space focus mode_toggle
 # doesn't re-run xrandr and flicker the screen.
 exec --no-startup-id autorandr --change --force
 
+# Blank the root window at login. i3 never paints the root, so it shows
+# whatever the display manager's greeter left behind. LightDM left it
+# neutral, but SDDM (setup/41-sddm.sh) leaves its themed greeter image on
+# the root -- at the greeter's resolution, so X tiles it across the larger
+# external monitor. That's the "my desktop is the login screen, tiled and
+# wrong-sized" symptom. A solid fill covers it on every output (a color
+# needs no geometry, so it survives later resolution/hotplug changes too).
+# xsetroot ships in x11-xserver-utils (setup/86-x11-tools.sh), already a
+# dependency -- no new package. Startup-only exec so an i3 reload doesn't
+# repaint. Swap in `feh --bg-fill <image>` here if you ever want a picture.
+exec --no-startup-id xsetroot -solid "#1e1e2e"
+
 # Workspace -> output assignment. 1-2 live on the laptop (primary);
 # 3-6 prefer the external monitor (nonprimary) and fall back to the
 # laptop when nothing is plugged in. 7-9 are unassigned and open on
