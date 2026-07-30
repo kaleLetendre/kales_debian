@@ -42,9 +42,14 @@ case "$1" in
     #      event, so udev never fires autorandr and every workspace stays
     #      stranded on eDP-1 -- the "my workspaces are all on the laptop"
     #      bug this branch exists to prevent.
-    # --force because the EDID fingerprint never changed (the monitor was
-    # only switched off, not unplugged), so plain --change considers the
-    # matching profile already loaded and skips both the switch and the hook.
+    # --force is insurance rather than a strict requirement. With $HDMI
+    # switched off autorandr reports "desk (detected)" but "mobile
+    # (current)" -- it compares the live xrandr config, not just the EDID
+    # fingerprint -- so plain --change does switch. The risk is the other
+    # case: when the live config already matches the detected profile,
+    # --change calls it loaded and skips the postswitch hook, and it is
+    # the hook (workspace placement), not the geometry, we are really
+    # after here. --force always runs it.
     autorandr --change --force
     # Fallback for a monitor autorandr has no saved profile for: put the
     # output up by hand and realign workspaces directly, so this command
