@@ -25,7 +25,7 @@ More than dotfiles. This repo manages:
 │   ├── 31-claude-account.sh # verify claude.ai login + Atlassian Rovo MCP auth
 │   ├── ...                   # desktop apps, themes, hotkeys, etc.
 │   ├── 84-zsh.sh             # zsh + fzf + zoxide, sets zsh as the login shell
-│   ├── 85-bluetooth.sh       # bluez + blueman + reconnect tuning
+│   ├── 85-bluetooth.sh       # bluez + blueman + A2DP audio + reconnect tuning
 │   ├── 87-i3.sh              # opt-in "Xfce with i3" login session
 │   ├── 88-keyboard.sh        # hid_apple fnmode for Apple-style keyboards
 │   ├── 89-audio.sh           # PulseAudio panel plugin + media keys
