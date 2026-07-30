@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+#
+# Post a comment on a Bitbucket Cloud pull request.
+#
+# Usage:
+#   bb-pr-comment <pr-id> "comment text"                  # general PR comment
+#   bb-pr-comment <pr-id> "comment text" <file> <line>    # inline comment on a line
+#
+# Auth comes from the environment (set these in ~/.zshrc):
+#   BITBUCKET_EMAIL      your Atlassian email
+#   BITBUCKET_API_TOKEN  a scoped API token with write:pullrequest:bitbucket
+#
+# Workspace + repo are read from the `origin` git remote of the current repo.
+#
+# Defensive checks below are intentional: this is a committed, reusable script
+# that Claude may run unattended, so it fails loudly instead of posting to the
+# wrong place with half-set variables.
+
+set -euo pipefail
+
+pr_id="${1:?usage: bb-pr-comment <pr-id> <text> [file] [line]}"
+text="${2:?usage: bb-pr-comment <pr-id> <text> [file] [line]}"
+file="${3:-}"
+line="${4:-}"
+
+: "${BITBUCKET_EMAIL:?set BITBUCKET_EMAIL in your shell profile}"
+: "${BITBUCKET_API_TOKEN:?set BITBUCKET_API_TOKEN in your shell profile}"
+
+# Derive workspace/repo from the origin remote (supports SSH and HTTPS URLs).
+remote="$(git config --get remote.origin.url)"
+slug="${remote#*bitbucket.org[:/]}"        # strip host prefix
+slug="${slug%.git}"                          # strip trailing .git
+workspace="${slug%%/*}"
+repo="${slug#*/}"
+
+api="https://api.bitbucket.org/2.0/repositories/${workspace}/${repo}/pullrequests/${pr_id}/comments"
+
+# Build the JSON payload. jq handles escaping of the comment text safely.
+if [[ -n "$file" && -n "$line" ]]; then
+  payload="$(jq -n --arg raw "$text" --arg path "$file" --argjson to "$line" \
+    '{content: {raw: $raw}, inline: {path: $path, to: $to}}')"
+else
+  payload="$(jq -n --arg raw "$text" '{content: {raw: $raw}}')"
+fi
+
+curl --fail-with-body -sS -X POST "$api" \
+  -u "${BITBUCKET_EMAIL}:${BITBUCKET_API_TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d "$payload"
