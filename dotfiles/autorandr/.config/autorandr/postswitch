@@ -5,14 +5,21 @@
 # don't migrate when monitors come and go, and at login they're often
 # created before a primary output is set. Move them explicitly here.
 #
+# The workspace -> output map is not duplicated here. It is read back out
+# of the running i3 config (`i3-msg -t get_config`), so dotfiles/i3's
+# `workspace N output ...` lines are the single source of truth. Adding a
+# workspace there is enough; this hook picks it up with no edit. (An
+# earlier version hard-coded `move 1..6`, which is exactly how workspaces
+# 7-9 ended up stranded on the laptop panel.)
+#
 # Why concrete output names instead of i3's primary/nonprimary keywords:
 # `move workspace to output A B` *cycles* through the list -- if the
 # workspace is already on A, i3 moves it to B. So "nonprimary primary"
 # is a toggle, not a preference: run it twice and a workspace bounces off
-# the external monitor and back onto the laptop. We resolve the actual
-# output names from xrandr and move each workspace to exactly one output,
-# which makes this hook idempotent -- safe to run on every login and on
-# every hotplug, however many times.
+# the external monitor and back onto the laptop. We resolve each keyword
+# to one actual output name and move each workspace exactly there, which
+# makes this hook idempotent -- safe to run on every login and on every
+# hotplug, however many times.
 #
 # No-op when i3 isn't the current WM (xfwm4 session, login screen).
 
@@ -21,13 +28,34 @@ set -eu
 command -v i3-msg >/dev/null || exit 0
 pgrep -x i3 >/dev/null || exit 0
 
-# Resolve the primary output and the external output (first connected
-# output that isn't primary). With no external monitor, external falls
-# back to primary, so workspaces 3-4 land on the laptop panel.
-primary=$(xrandr --query | awk '/ connected primary/ {print $1; exit}')
-[ -n "$primary" ] || primary=$(xrandr --query | awk '/ connected/ {print $1; exit}')
-external=$(xrandr --query | awk '/ connected/ && !/ primary/ {print $1; exit}')
-[ -n "$external" ] || external=$primary
+# Ask i3 (not xrandr) which outputs are live: xrandr still reports a
+# monitor as "connected" when its output has been switched off with
+# `xrandr --output ... --off` (that is what `remote-view on` does), and
+# moving a workspace onto a disabled output silently does nothing.
+# i3's active flag is the same thing i3 itself uses to place workspaces.
+# external falls back to primary, so with the laptop panel alone every
+# nonprimary workspace collapses onto it instead of vanishing.
+read -r primary external <<EOF
+$(i3-msg -t get_outputs | python3 -c '
+import json, sys
+outs = [o for o in json.load(sys.stdin) if o["active"]]
+primary = next((o["name"] for o in outs if o["primary"]), outs[0]["name"] if outs else "")
+external = next((o["name"] for o in outs if o["name"] != primary), primary)
+print(primary, external)
+')
+EOF
+
+[ -n "$primary" ] || exit 0
+
+# `workspace N output <first> <fallback...>` -- we only want N and the
+# first (preferred) output token. i3-msg prints the config verbatim,
+# comments included, and comment lines start with "#" so they never match
+# $1 == "workspace". Fall back to the stowed file if a future i3 wraps
+# get_config in JSON instead of printing it raw.
+assignments=$(i3-msg -t get_config | awk '$1 == "workspace" && $3 == "output" { print $2, $4 }')
+if [ -z "$assignments" ]; then
+    assignments=$(awk '$1 == "workspace" && $3 == "output" { print $2, $4 }' "$HOME/.config/i3/config")
+fi
 
 # Snapshot focused workspace -- `move workspace to output` only acts on
 # the focused workspace, so we switch through each one in turn and need
@@ -45,18 +73,18 @@ import json, sys
 print(" ".join(str(w["num"]) for w in json.load(sys.stdin)))
 ')
 
-move() {
-    local num=$1 out=$2
-    case " $existing " in *" $num "*) ;; *) return 0 ;; esac
+while read -r num target; do
+    [ -n "$num" ] || continue
+    case " $existing " in *" $num "*) ;; *) continue ;; esac
+    case "$target" in
+        primary)    out=$primary ;;
+        nonprimary) out=$external ;;
+        *)          out=$target ;;   # explicit output name, use as written
+    esac
     i3-msg "workspace number $num; move workspace to output $out" >/dev/null
-}
-
-move 1 "$primary"
-move 2 "$primary"
-move 3 "$external"
-move 4 "$external"
-move 5 "$external"
-move 6 "$external"
+done <<EOF
+$assignments
+EOF
 
 # Best-effort focus restore; ignore failure if that workspace is gone.
 [ -n "$focused" ] && i3-msg "workspace $focused" >/dev/null || true
