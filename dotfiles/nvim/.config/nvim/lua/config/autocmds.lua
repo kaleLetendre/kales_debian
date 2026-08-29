@@ -1,0 +1,12 @@
+-- config/autocmds.lua - event hooks, loaded by LazyVim after its own.
+-- LazyVim's defaults already cover the usual ones (highlight on yank,
+-- restore cursor position, auto-create missing parent dirs on save, strip
+-- trailing whitespace notifications, close scratch buffers with q).
+-- See: https://lazyvim.org/configuration/general
+--
+-- Nothing custom yet. Add hooks here rather than in a plugin file, e.g.:
+--
+--   vim.api.nvim_create_autocmd("FileType", {
+--     pattern = { "gitcommit", "markdown" },
+--     callback = function() vim.opt_local.spell = true end,
+--   })

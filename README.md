@@ -160,6 +160,18 @@ What it does, in order:
      broader agent permissions. Modeled on `10-git-and-ssh.sh`'s
      SSH-key-paste flow: detect state, print clear next step, poll
      until done.
+   - `69-neovim.sh` — Neovim as a terminal IDE on a LazyVim base. Installs
+     a pinned upstream release tarball into `/opt` (Debian 13 ships 0.10.4;
+     LazyVim needs 0.11+), a JetBrainsMono Nerd Font for the icon glyphs,
+     and the Go / Rust / C toolchains the language servers build against.
+     The config is stowed from `dotfiles/nvim/`, and the module then
+     provisions it headlessly via `setup/69-neovim-provision.lua` — plugins,
+     treesitter parsers and language servers are all installed before
+     bootstrap exits, so there is no manual first-launch step. Plugin
+     versions pin to `lazy-lock.json`, which the stow symlink writes back
+     into this repo. `<leader>?` inside nvim opens
+     `dotfiles/nvim/.config/nvim/CHEATSHEET.md`, the same pattern as
+     `Super+?` in i3.
 2. Runs `hardware/<machine>.sh` matched by DMI product name, if present.
 3. Stows every package under `dotfiles/`.
 
