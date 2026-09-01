@@ -20,28 +20,28 @@
 -- `map --when-focus-on` in dotfiles/kitty/.config/kitty/kitty.conf.
 --
 -- The payload is OSC 1337 SetUserVar with a base64 value ("MQo" = "1").
--- Guarded so the escape sequence is not printed as literal garbage in a
--- terminal that would not understand it.
 --
--- Both halves of the guard matter. KITTY_WINDOW_ID only exists when kitty
--- started the process directly; ssh does not forward it, so on this box --
--- which is mostly reached over ssh from the laptop -- that check alone
--- silently disables the whole thing, and kitty goes on eating shift+arrows
--- in the ssh window. TERM *is* forwarded by ssh, so it is what identifies
--- kitty on the far end.
-if vim.env.KITTY_WINDOW_ID or vim.env.TERM == "xterm-kitty" then
-  vim.api.nvim_create_autocmd({ "VimEnter", "VimResume" }, {
-    group = vim.api.nvim_create_augroup("KittyInEditorSet", { clear = true }),
-    callback = function()
-      io.stdout:write("\x1b]1337;SetUserVar=in_editor=MQo\a")
-    end,
-  })
-  -- Unset on the way out, or kitty keeps handing those keys to a shell that
-  -- has no use for them. VimSuspend covers ctrl+z-ing out to the shell.
-  vim.api.nvim_create_autocmd({ "VimLeave", "VimSuspend" }, {
-    group = vim.api.nvim_create_augroup("KittyInEditorUnset", { clear = true }),
-    callback = function()
-      io.stdout:write("\x1b]1337;SetUserVar=in_editor\a")
-    end,
-  })
-end
+-- Sent unconditionally, on purpose. This used to be gated on KITTY_WINDOW_ID
+-- or TERM=="xterm-kitty", and the gate was the bug: ssh does not forward
+-- KITTY_WINDOW_ID, and TERM is not reliably preserved either -- plenty of
+-- ssh setups rewrite it -- so on the machine this config is mostly used from,
+-- the variable was silently never set and kitty went on eating the keys.
+--
+-- The cost of being wrong the other way is nil: OSC is a self-terminating
+-- escape sequence, and a terminal that does not know 1337 consumes it and
+-- moves on. Guessing whether the far end is kitty is not worth a broken
+-- editor when the guess is wrong.
+vim.api.nvim_create_autocmd({ "VimEnter", "VimResume" }, {
+  group = vim.api.nvim_create_augroup("KittyInEditorSet", { clear = true }),
+  callback = function()
+    io.stdout:write("\x1b]1337;SetUserVar=in_editor=MQo\a")
+  end,
+})
+-- Unset on the way out, or kitty keeps handing those keys to a shell that
+-- has no use for them. VimSuspend covers ctrl+z-ing out to the shell.
+vim.api.nvim_create_autocmd({ "VimLeave", "VimSuspend" }, {
+  group = vim.api.nvim_create_augroup("KittyInEditorUnset", { clear = true }),
+  callback = function()
+    io.stdout:write("\x1b]1337;SetUserVar=in_editor\a")
+  end,
+})
