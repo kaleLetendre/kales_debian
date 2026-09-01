@@ -243,3 +243,17 @@ map("n", "<F12>", "gd", "Go to definition", { remap = true })
 map("n", "<S-F12>", "gr", "Find references", { remap = true })
 map("n", "<F3>", "n", "Next search match")
 map("n", "<S-F3>", "N", "Previous search match")
+
+-- ---- TEMPORARY: does the chord reach nvim? Remove when answered. ----
+-- io.open rather than vim.fn.writefile: on_key runs in a fast event context
+-- where vimscript calls are rejected, so writefile silently logs nothing.
+local f = io.open("/tmp/keys.log", "a")
+if f then
+  vim.on_key(function(key)
+    if key and #key > 0 and (key:byte(1) < 32 or key:byte(1) > 126) then
+      f:write((key:gsub(".", function(c) return string.format("\\x%02x", c:byte()) end)) .. "\n")
+      f:flush()
+    end
+  end)
+end
+-- ---- END TEMPORARY ----
