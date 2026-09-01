@@ -21,8 +21,12 @@ case "$1" in
     if pgrep -x x11vnc >/dev/null; then
       echo "x11vnc already running"
     else
+      # -xrandr resize: the root window changes size right around us --
+      # remote-view flips eDP-1/HDMI-1 on its way in and out. Without this,
+      # an x11vnc that was already running keeps serving the *old* geometry
+      # and the viewer shows a stale, cut-off desktop.
       x11vnc -display :0 -auth "$XAUTHORITY" -localhost -rfbport 5900 \
-             -nopw -forever -shared -noxdamage -bg -q
+             -nopw -forever -shared -noxdamage -xrandr resize -bg -q
     fi
     echo "remote-display ON  — x11vnc on localhost:5900, panel sleep disabled"
     ;;

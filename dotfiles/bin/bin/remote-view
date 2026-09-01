@@ -27,7 +27,22 @@ hdmi_active() {
 
 case "$1" in
   on)
-    xrandr --output "$HDMI" --off
+    # Bring eDP-1 up and drop HDMI in ONE xrandr call. Both halves matter:
+    #
+    #   explicit eDP-1  the panel is not guaranteed to be on when we get here.
+    #       With the lid shut, eDP-1 has already been switched off for us, and
+    #       turning HDMI off on top of that leaves X with *no* active output:
+    #       the screen collapses to its 320x200 minimum, i3 parks every
+    #       workspace on the placeholder output "xroot-0", and the VNC comes
+    #       up as a tiny, cut-off desktop. Turning the panel on is what makes
+    #       "all workspaces collapse onto eDP-1" actually true.
+    #
+    #   one call     a single invocation is one atomic modeset, so there is no
+    #       intermediate moment with an empty framebuffer for i3 to react to.
+    #
+    # A dark panel is fine -- with the lid closed the backlight is off, but the
+    # framebuffer is live and that is all VNC needs.
+    xrandr --output eDP-1 --primary --auto --pos 0x0 --output "$HDMI" --off
     "$HOME/bin/remote-display" on
     echo "remote-view ON  — $HDMI off, all workspaces on eDP-1, VNC up. SSH unaffected."
     ;;
