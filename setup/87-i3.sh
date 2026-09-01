@@ -163,3 +163,51 @@ if command -v xfconf-query >/dev/null 2>&1; then
         log "xfce panel: Action Buttons already absent"
     fi
 fi
+
+# 5. Point XFCE's lock plumbing at our i3lock script.
+#
+# Symptom this fixes: an occasional popup after closing/opening the lid --
+# "None of the screen lock tools ran successfully, the screen will not be
+# locked." It comes from xfce4-power-manager (string lives in libxfce4ui),
+# which locks before suspend by default (lock-screen-suspend-hibernate
+# defaults to TRUE) and on the lid trigger.
+#
+# Why it fails in this session: libxfce4ui's xfce_screensaver_lock() only
+# knows how to lock via a D-Bus screensaver owner (org.{freedesktop,xfce,
+# gnome,mate,cinnamon}.ScreenSaver) or by spawning xfce4-screensaver /
+# light-locker-command / xscreensaver-command / xdg-screensaver. None apply
+# here: xfce4-screensaver and xscreensaver aren't installed, light-locker is
+# deliberately suppressed (dotfiles/autostart Hidden=true, we lock with
+# i3lock), and no D-Bus name is claimed. Every candidate fails -> popup, and
+# the machine suspends UNLOCKED.
+#
+# The escape hatch: libxfce4ui tries the xfce4-session channel's
+# /general/LockCommand FIRST, and honors it even though xfce4-session itself
+# isn't running in this session (verified: lock() returns TRUE and runs the
+# command). So hand it lock.sh -- the same i3lock-color invocation Ctrl+Alt+L
+# uses -- and the whole XFCE lock path starts working instead of erroring.
+#
+# Absolute path, not ~: the value is spawned as a bare command line, so no
+# shell and no tilde expansion. Property is per-user, so $HOME is correct.
+#
+# Note this does NOT fix xflock4, which in Xfce 4.20 is only a D-Bus Lock
+# call to org.xfce.SessionManager and no-ops with no xfce4-session. Nothing
+# here calls xflock4; see the comment in dotfiles/i3/.config/i3/config.
+#
+# Idempotent: skips the write when the property already holds this value.
+if command -v xfconf-query >/dev/null 2>&1; then
+    LOCK_CMD="$HOME/.config/i3/lock.sh"
+    current=$(xfconf-query -c xfce4-session -p /general/LockCommand 2>/dev/null || true)
+    if [[ "$current" == "$LOCK_CMD" ]]; then
+        log "xfce4-session LockCommand already set to lock.sh"
+    else
+        log "setting xfce4-session /general/LockCommand -> $LOCK_CMD"
+        # --create makes this work on a fresh machine where xfce4-session's
+        # xfconf channel has never been written (property doesn't exist yet).
+        xfconf-query -c xfce4-session -p /general/LockCommand \
+            --create --type string --set "$LOCK_CMD"
+        # Pick it up without a re-login if the power manager is running.
+        # Tolerate it being absent (bootstrap from a TTY, no X session yet).
+        xfce4-power-manager --restart 2>/dev/null || true
+    fi
+fi
