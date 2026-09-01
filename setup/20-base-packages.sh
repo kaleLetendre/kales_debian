@@ -25,6 +25,11 @@ log "base packages"
 # lacks this entry breaks everything that reads terminfo (clear, tput,
 # vim, less) with `'xterm-kitty': unknown terminal type`. It's a tiny
 # data-only package (no kitty binary), so it's safe on servers too.
+#
+# ethtool inspects/sets NIC state -- link speed & duplex, carrier, and
+# hardware offloads. It's the first thing you reach for when Ethernet
+# "gets nothing": it distinguishes a dead link from a live link that
+# isn't passing traffic (e.g. DHCP failing while the port is up).
 $SUDO apt-get install -y \
     git \
     curl \
@@ -39,4 +44,5 @@ $SUDO apt-get install -y \
     postgresql-client \
     python3-venv \
     python3-pip \
+    ethtool \
     kitty-terminfo
