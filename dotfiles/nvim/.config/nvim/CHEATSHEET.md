@@ -41,24 +41,103 @@ which aren't keymaps.
 
 | VS Code | Here |
 | --- | --- |
-| `Ctrl+P` quick open | `<leader><space>` or `<leader>ff` |
-| `Ctrl+Shift+F` find in files | `<leader>/` or `<leader>sg` |
+| `Ctrl+P` quick open | `Ctrl+P`, `<leader><space>` or `<leader>ff` |
+| `Ctrl+Shift+F` find in files | `Ctrl+Shift+F`, `<leader>/` or `<leader>sg` |
 | `Ctrl+Shift+H` replace in files | `<leader>sr` |
-| `Ctrl+Shift+E` explorer | `<leader>e` |
-| `Ctrl+Shift+P` command palette | `<leader>sC` (commands) — or just type `:` |
+| `Ctrl+Shift+E` explorer | `Ctrl+Shift+E` or `<leader>e` |
+| `Ctrl+Shift+P` command palette | `Ctrl+Shift+P`, `<leader>sC` — or just type `:` |
 | `Ctrl+B` toggle sidebar | `<leader>e` again |
-| `` Ctrl+` `` terminal | `<Ctrl-/>` |
-| `F12` go to definition | `gd` |
-| `Shift+F12` find references | `gr` |
-| `F2` rename symbol | `<leader>cr` |
+| `` Ctrl+` `` terminal | `` Ctrl+` `` |
+| `F12` go to definition | `F12` or `gd` |
+| `Shift+F12` find references | `Shift+F12` or `gr` |
+| `F2` rename symbol | `F2` or `<leader>cr` |
 | `Ctrl+.` quick fix | `<leader>ca` |
 | `Ctrl+Space` hover / docs | `K` |
 | `Shift+Alt+F` format | `<leader>cf` |
 | `Ctrl+Tab` switch tab | `<S-h>` / `<S-l>`, or `<leader>,` to pick |
 | `Ctrl+W` close tab | `<leader>bd` |
+| `Ctrl+S` / `Ctrl+C` / `Ctrl+V` / `Ctrl+Z` | the same — see the section above |
 | `Ctrl+\` split | `<leader>|` (right) / `<leader>-` (below) |
 | `F5` start debugging | `<leader>dc` |
 | `F9` toggle breakpoint | `<leader>db` |
+
+## The keys every other editor has
+
+Modal editing is one thing; throwing out `Ctrl+S` is another. These work the
+way they do in VS Code, and they don't take anything away from modal editing.
+Defined in `lua/config/standard-keys.lua` — delete that one `require` in
+`lua/config/keymaps.lua` to go back to stock vim behaviour.
+
+| Key | What it does |
+| --- | --- |
+| `Ctrl+S` | save (only if modified) — works from insert mode without leaving it |
+| `Shift+arrows` | select, growing from the cursor. `Shift+Home/End/PgUp/PgDn` too |
+| `Ctrl+Shift+←/→` | select a word at a time |
+| mouse drag | select |
+| type over a selection | replaces it, like a normal editor |
+| `Ctrl+C` / `Ctrl+X` | copy / cut the selection — the whole line if nothing is selected |
+| `Ctrl+V` | paste (over the selection, if there is one) |
+| `Ctrl+A` | select all |
+| `Ctrl+Z` / `Ctrl+Y` | undo / redo (`Ctrl+Shift+Z` also redoes) |
+| `Ctrl+F` | find in this file — `n` / `N` step through the hits |
+| `Ctrl+Backspace` | delete the word before the cursor (insert mode) |
+| `Backspace` / `Del` | delete the selection |
+| `←` at column 1 | wraps to the end of the previous line (and `→` forwards) |
+| `Shift+click` | extend the selection to where you clicked |
+| `Ctrl+D` | put a cursor on the next occurrence — again for the one after |
+| `Ctrl+Shift+D` | skip this occurrence, take the next |
+| `Ctrl+Alt+↑/↓` | a cursor on the line above / below |
+| `Alt+click`, `Alt+drag` | add a cursor there / a column of them |
+| `Esc` (with extra cursors) | park them; again discards them |
+| `Tab` / `Shift+Tab` on a selection | indent / outdent, selection stays |
+| `Alt+↑/↓` | move the line or selection up / down |
+| `Shift+Alt+↑/↓` | duplicate it up / down |
+| `Ctrl+Shift+K` | delete the line |
+| `Ctrl+Enter` / `Shift+Enter` | open a line below / above, from anywhere on it |
+| `Ctrl+/` | toggle comment |
+| `Ctrl+P` | open a file |
+| `Ctrl+Shift+P` | command palette |
+| `Ctrl+Shift+F` | find in files |
+| `Ctrl+Shift+E` | file explorer |
+| `F2` | rename symbol |
+| `F3` / `Shift+F3` | next / previous search match |
+| `F12` / `Shift+F12` | go to definition / find references |
+| `` Ctrl+` `` | terminal (moved off `Ctrl+/`, which now comments) |
+
+Selecting with shift or the mouse puts you in **select** mode, not visual
+mode — that's the mode where typing replaces the selection. `v` still enters
+plain visual mode, where `d`, `y`, `c` and every operator work as always;
+`Ctrl+G` toggles between the two.
+
+Copy and paste use the system clipboard (`"+`), so they cross into Vivaldi
+and VS Code.
+
+### Where the vim keys went
+
+These keys had vim meanings that got displaced. Nothing was deleted:
+
+| Old key | Did | Now |
+| --- | --- | --- |
+| `Ctrl+V` | blockwise visual | `Ctrl+Q` |
+| `Ctrl+V` (insert) | insert a literal character | `Ctrl+Q` |
+| `Ctrl+A` | increment the number under the cursor | `+` |
+| `Ctrl+X` | decrement it | `-` |
+| `Ctrl+Z` | suspend nvim to the shell | `:sus` |
+| `Ctrl+F` | page down | `PageDown` |
+| `Ctrl+Y` | scroll up one line | `Ctrl+E` / `Ctrl+D` scroll |
+| `Ctrl+C` | same as `Esc` | `Esc` |
+| `Ctrl+D` | scroll half a page down | `PageDown`, `Ctrl+E` |
+
+Two conventions are deliberately *not* bound. `Ctrl+W` stays vim's window
+prefix (`Ctrl+W s`, `Ctrl+W v`, `Ctrl+W q`) — `<leader>bd` closes a buffer.
+`Ctrl+H` stays "move to the window on the left"; replace-in-files is
+`<leader>sr`.
+
+`Ctrl+S` and `Ctrl+Q` are XOFF/XON at the terminal driver and would never
+reach nvim; `stty -ixon` in `.zshrc` disables that. kitty's own
+`Shift+arrow` scrolling would eat the selection keys, so kitty releases them
+while nvim has focus — see the `--when-focus-on var:in_editor` block in
+`kitty.conf`.
 
 ## Modes
 
@@ -68,7 +147,9 @@ which aren't keymaps.
 | `i` / `a` | **insert** before / after the cursor |
 | `I` / `A` | insert at start / end of the line |
 | `o` / `O` | open a new line below / above and insert |
-| `v` / `V` / `Ctrl+v` | **visual** by character / line / block |
+| `v` / `V` / `Ctrl+q` | **visual** by character / line / block |
+| `Shift+arrow`, mouse drag | **select** — typing replaces the selection |
+| `Ctrl+g` | toggle select ⇄ visual |
 | `:` | **command** line |
 
 If a key does something bizarre, you're probably in the wrong mode. Press `Esc`.
@@ -319,7 +400,7 @@ installs the toolchains, the adapters install themselves on first use.
 
 | Key | Action |
 | --- | --- |
-| `Ctrl+/` | floating terminal at the project root (same key hides it) |
+| `` Ctrl+` `` | floating terminal at the project root (same key hides it) |
 | `<leader>ft` / `<leader>fT` | terminal at project root / cwd |
 | `Ctrl+h/j/k/l` | leave the terminal for another window |
 | `:!cmd` | run one shell command without leaving nvim |

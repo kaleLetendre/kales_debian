@@ -4,6 +4,11 @@
 
 local cheatsheet = require("config.cheatsheet")
 
+-- ctrl+s / ctrl+c / ctrl+v / ctrl+z / shift+arrow selection -- the editor
+-- conventions vim ignores. Kept in its own file because it is a coherent
+-- layer you might want to turn off in one move, not a pile of odds and ends.
+require("config.standard-keys")
+
 -- <leader>? opens the cheatsheet, mirroring Super+? in i3. Same chord, same
 -- job, so there is one "what were the keys again" reflex instead of two.
 --

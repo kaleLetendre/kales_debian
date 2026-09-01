@@ -280,7 +280,7 @@ need them, not before.
 | `<leader>cr` | F2 rename symbol |
 | `]d` / `[d` | next / previous error |
 | `<leader>gg` | full git UI (lazygit) |
-| `<C-/>` | terminal |
+| `` <C-`> `` | terminal |
 
 `<leader>gg` deserves its own note: it opens lazygit, a proper git
 interface. Stage hunks, write commits, browse branches, rebase. Press `?`
