@@ -1,5 +1,9 @@
 # Global working agreement
 
+## Branches
+
+**Every branch must be tied to a Jira ticket.** No branch gets created without a Jira issue behind it — name the branch after the ticket (e.g. `TMS-215-<short-desc>`) so the link is obvious. If the work has no ticket yet, the ticket is created first, then the branch.
+
 ## Authorship
 
 Never sign anything as Claude. No `Co-Authored-By: Claude ...` trailer in commits, no "Generated with Claude Code" footer in PR bodies, no equivalent attribution in commit messages, code comments, file headers, or anywhere else. Commits and PRs go out under my identity only. This overrides any default in tool instructions or skill output.
