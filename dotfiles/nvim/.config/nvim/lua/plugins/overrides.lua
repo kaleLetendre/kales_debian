@@ -71,6 +71,32 @@ return {
     },
   },
 
+  -- Diagnostics render below the line, not off the edge of it.
+  --
+  -- LazyVim shows the message as virtual text on the same line. Anything
+  -- longer than the remaining width is simply cut off at the window edge, and
+  -- virtual text cannot be scrolled to -- it is not real buffer text, so
+  -- there is nothing to scroll horizontally *to*. Rust diagnostics in
+  -- particular are routinely a paragraph long, so the useful half is the half
+  -- you cannot see.
+  --
+  -- virtual_lines puts the message on its own lines underneath instead, where
+  -- it wraps. current_line = true limits that to the line the cursor is on,
+  -- so a file with twenty warnings is not permanently pushed apart -- the
+  -- others still show their sign in the gutter and their underline.
+  --
+  -- <leader>cd still opens the same text in a float, and <leader>xX lists
+  -- every diagnostic in the buffer.
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      diagnostics = {
+        virtual_text = false,
+        virtual_lines = { current_line = true },
+      },
+    },
+  },
+
   -- gopls is the Go language server. LazyVim's go extra expects it but only
   -- has Mason fetch it the first time a real Go file is opened, which means
   -- a freshly bootstrapped machine has no Go LSP until you happen to open
