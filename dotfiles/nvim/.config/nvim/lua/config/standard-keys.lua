@@ -243,3 +243,69 @@ map("n", "<F12>", "gd", "Go to definition", { remap = true })
 map("n", "<S-F12>", "gr", "Find references", { remap = true })
 map("n", "<F3>", "n", "Next search match")
 map("n", "<S-F3>", "N", "Previous search match")
+
+-- --- 14. word-wise arrows that stop at the ends of lines ----------------
+-- vim's `w` means "start of the next word", and it does not care about line
+-- boundaries: with the cursor before the last word on a line, ctrl+right
+-- lands on the next line, because that is where the next word starts. Every
+-- other editor stops at the end of the line first and only crosses on the
+-- following press. Same in reverse for ctrl+left.
+--
+-- So compute the target here rather than lean on `w`/`b`. The rule is the one
+-- other editors use: skip any whitespace, then skip one run of characters --
+-- either word characters or punctuation, never a mix -- and stop. Never past
+-- the end of the line; when already there, and only then, cross to the next.
+--
+-- Insert mode only. In normal mode LazyVim binds ctrl+arrow to resizing the
+-- current split, which is worth more than a second way to move by word.
+local function word_jump(dir)
+  local row, col = unpack(vim.api.nvim_win_get_cursor(0))
+  local line = vim.api.nvim_get_current_line()
+  local n = #line
+
+  if dir > 0 then
+    if col >= n then -- already at end of line: now cross
+      if row < vim.api.nvim_buf_line_count(0) then
+        vim.api.nvim_win_set_cursor(0, { row + 1, 0 })
+      end
+      return
+    end
+    local i = col + 1 -- 1-based index of the character under the cursor
+    while i <= n and line:sub(i, i):match("%s") do
+      i = i + 1
+    end
+    if i <= n then
+      local class = line:sub(i, i):match("[%w_]") and "[%w_]" or "[^%w_%s]"
+      while i <= n and line:sub(i, i):match(class) do
+        i = i + 1
+      end
+    end
+    vim.api.nvim_win_set_cursor(0, { row, i - 1 })
+  else
+    if col == 0 then -- already at start of line: now cross
+      if row > 1 then
+        local prev = vim.api.nvim_buf_get_lines(0, row - 2, row - 1, false)[1] or ""
+        vim.api.nvim_win_set_cursor(0, { row - 1, #prev })
+      end
+      return
+    end
+    local i = col -- 1-based index of the character before the cursor
+    while i >= 1 and line:sub(i, i):match("%s") do
+      i = i - 1
+    end
+    if i >= 1 then
+      local class = line:sub(i, i):match("[%w_]") and "[%w_]" or "[^%w_%s]"
+      while i >= 1 and line:sub(i, i):match(class) do
+        i = i - 1
+      end
+    end
+    vim.api.nvim_win_set_cursor(0, { row, i })
+  end
+end
+
+map("i", "<C-Right>", function()
+  word_jump(1)
+end, "Word right")
+map("i", "<C-Left>", function()
+  word_jump(-1)
+end, "Word left")

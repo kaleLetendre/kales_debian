@@ -83,6 +83,7 @@ Defined in `lua/config/standard-keys.lua` — delete that one `require` in
 | `Ctrl+Backspace` | delete the word before the cursor (insert mode) |
 | `Backspace` / `Del` | delete the selection |
 | `←` at column 1 | wraps to the end of the previous line (and `→` forwards) |
+| `Ctrl+←/→` | a word at a time, stopping at the line end before crossing (insert mode) |
 | `Shift+click` | extend the selection to where you clicked |
 | `Ctrl+D` | put a cursor on the next occurrence — again for the one after |
 | `Ctrl+Shift+D` | skip this occurrence, take the next |
