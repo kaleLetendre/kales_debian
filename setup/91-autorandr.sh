@@ -46,3 +46,31 @@ sudo tee /etc/systemd/system/autorandr.service.d/hotplug-delay.conf >/dev/null <
 ExecStartPre=/bin/sleep 5
 EOF
 sudo systemctl daemon-reload
+
+# Make autorandr the SOLE display authority -- stop xfsettingsd clobbering it.
+#
+# xfsettingsd (started by 87-i3.sh for themes/xsettings/hotkeys, so we can't
+# just not run it) also carries a display helper. Its stored "Default" profile
+# marks BOTH outputs Primary=false, and with /AutoEnableProfiles on it re-applies
+# that profile on every RandR event (DPMS wake, hotplug, mode query). That wipes
+# the `primary` flag autorandr's desk profile set at login. With no primary, i3
+# can't resolve `nonprimary`, so the next workspace created strands on the laptop
+# panel -- and autorandr's postswitch hook never runs, because *autorandr* didn't
+# switch, xfsettingsd did, behind its back. Symptom: workspaces 6-9 drift off the
+# external monitor hours after login for no visible reason.
+#
+# Two idempotent xfconf fixes (xfconf-query is the repo's settings pattern, cf.
+# 87-i3.sh). Belt: stop the helper auto-applying displays at all, leaving
+# autorandr (udev + the i3-start `autorandr --change --force`) as the only thing
+# that touches geometry/primary. Suspenders: mark the laptop panel primary in
+# XFCE's own profile too, so if the helper ever does apply, it sets the same
+# primary autorandr wants instead of clearing it. eDP-1 is the internal panel on
+# this laptop (and the `primary` output in autorandr/desk); only set it when that
+# subtree already exists, so this no-ops on a machine XFCE hasn't profiled yet.
+log "disabling xfsettingsd display auto-management (autorandr owns displays)"
+xfconf-query -c displays -p /AutoEnableProfiles --create -t int -s 0
+xfconf-query -c displays -p /Notify --create -t int -s 0
+if xfconf-query -c displays -p /Default/eDP-1/Primary >/dev/null 2>&1; then
+    log "marking eDP-1 primary in XFCE's displays profile"
+    xfconf-query -c displays -p /Default/eDP-1/Primary --create -t bool -s true
+fi
