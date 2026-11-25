@@ -28,3 +28,24 @@ if [[ -x /usr/bin/kitty ]]; then
     log "setting kitty as x-terminal-emulator"
     $SUDO update-alternatives --set x-terminal-emulator /usr/bin/kitty
 fi
+
+# JetBrainsMono Nerd Font -- kitty.conf sets this as font_family. The Nerd
+# Font private-use glyphs are what prompts, `eza --icons`, git tools and any
+# TUI draw their icons from; without a patched font they render as boxes.
+# (Lived in the old neovim module; moved here when that was removed, since
+# the terminal needs the font regardless of editor.) Debian has no Nerd Font
+# package, so pull the pinned upstream release.
+NERD_FONT_VERSION="v3.5.0"
+FONT_DIR="/usr/local/share/fonts/JetBrainsMonoNerdFont"
+if [[ ! -d "$FONT_DIR" ]]; then
+    log "installing JetBrainsMono Nerd Font $NERD_FONT_VERSION"
+    tmp="$(mktemp -d)"
+    curl -fsSL -o "$tmp/font.tar.xz" \
+        "https://github.com/ryanoasis/nerd-fonts/releases/download/$NERD_FONT_VERSION/JetBrainsMono.tar.xz"
+    $SUDO mkdir -p "$FONT_DIR"
+    $SUDO tar -xJf "$tmp/font.tar.xz" -C "$FONT_DIR"
+    rm -rf "$tmp"
+    $SUDO fc-cache -f "$FONT_DIR"
+else
+    log "JetBrainsMono Nerd Font already installed"
+fi
