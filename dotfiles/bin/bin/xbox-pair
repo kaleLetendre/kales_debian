@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# xbox-pair - (re-)pair the Xbox Series controller over Bluetooth.
+#
+# Why this exists: the controller's old BLE firmware (5.09) pairs fine but
+# loops on every *reconnect* under BlueZ (GATT reads fail with "Request
+# attribute has encountered an unlikely error", xpadneo attaches and drops
+# every ~1s). A fresh pair always works, so after the controller sleeps or
+# powers off: put it in pairing mode and run this. Updating the controller
+# firmware (Xbox Accessories app on Windows/Xbox) is the real fix; then a
+# normal reconnect should work and this script is unnecessary.
+#
+# Usage: hold the pair button (top edge, by USB-C) until the logo blinks
+# fast, then run `xbox-pair`. Unplug any USB cable first, or the controller
+# stays in wired mode and never advertises.
+
+set -u
+
+# Anything named like this; the MAC is discovered, so this works for any
+# Xbox Wireless Controller, not just the one paired first.
+NAME="Xbox Wireless Controller"
+SCAN_SECS=60
+
+log() { printf '  -> %s\n' "$*"; }
+
+# Drop any stale pairing so BlueZ starts clean (a half-open stale link is
+# exactly what blocks reconnects).
+for mac in $(bluetoothctl devices | grep -F "$NAME" | awk '{print $2}'); do
+    log "removing stale pairing $mac"
+    bluetoothctl remove "$mac" >/dev/null
+done
+
+log "scanning up to ${SCAN_SECS}s -- controller logo should be blinking fast"
+mac=""
+{
+    # Pairing agent for Just-Works confirmation. When blueman's applet is
+    # running it already owns the agent and this prints a harmless
+    # "Failed to register agent object" -- pairing goes through it instead.
+    echo "agent on"; echo "default-agent"
+    echo "scan on"
+    for _ in $(seq 1 $((SCAN_SECS / 2))); do
+        sleep 2
+        mac=$(bluetoothctl devices | grep -F "$NAME" | awk '{print $2}' | head -n1)
+        [[ -n "$mac" ]] && break
+    done
+    if [[ -n "$mac" ]]; then
+        # Pair/trust/connect inside the same bluetoothctl session that has
+        # the scan running; BlueZ needs the device "seen" to pair it.
+        echo "pair $mac";    sleep 12
+        echo "trust $mac";   sleep 1
+        echo "connect $mac"; sleep 6
+    fi
+    echo "scan off"
+    echo "quit"
+} | bluetoothctl >/dev/null 2>&1
+
+mac=$(bluetoothctl devices | grep -F "$NAME" | awk '{print $2}' | head -n1)
+if [[ -z "$mac" ]]; then
+    echo "controller not found -- is it in pairing mode (fast blink) and unplugged from USB?" >&2
+    exit 1
+fi
+
+bluetoothctl info "$mac" | grep -E 'Paired|Bonded|Trusted|Connected'
+
+# The real success check: xpadneo created an input device. "Connected: yes"
+# alone is not enough -- the reconnect-loop failure also shows that.
+for _ in $(seq 1 10); do
+    if grep -q "Name=\"$NAME\"" /proc/bus/input/devices; then
+        log "ready: input device present (xpadneo)"
+        exit 0
+    fi
+    sleep 1
+done
+echo "paired but no input device appeared -- run xbox-pair again" >&2
+exit 1
