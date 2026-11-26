@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+# autorandr postswitch hook (tv profile only): compensate for the TV's HDMI
+# overscan, which crops the edges of a 1080p signal (panel/clock cut off).
+# Shrinks the NVIDIA output viewport so the full 1920x1080 desktop is drawn
+# inside the visible area, centred, with a black border.
+#
+# Lives in postswitch.d/ (not a profile-level `postswitch` file) because
+# autorandr runs only the first `postswitch` it finds -- a profile one would
+# shadow the global i3 workspace hook. postswitch.d/ entries run in addition.
+#
+# Runs after autorandr's xrandr call, which resets the viewport, so this is
+# re-applied on every login and every TV hotplug/power-cycle.
+#
+# Better fix if the TV menu has it: turn overscan off on the TV
+# (Picture -> Aspect/Screen Mode -> Dot by Dot / Just Scan), then delete
+# this hook for a pixel-exact image.
+
+set -eu
+
+command -v nvidia-settings >/dev/null || exit 0
+
+# Shrink per axis, in percent of 1920x1080. 5% total = 2.5% each side.
+# Raise if edges are still cut off, lower if black bars show.
+PCT=5
+
+w=$((1920 * (100 - PCT) / 100))
+h=$((1080 * (100 - PCT) / 100))
+x=$(((1920 - w) / 2))
+y=$(((1080 - h) / 2))
+
+nvidia-settings --assign CurrentMetaMode="HDMI-0: nvidia-auto-select @1920x1080 +0+0 {ViewPortIn=1920x1080, ViewPortOut=${w}x${h}+${x}+${y}}" >/dev/null
+
+# Side effect of the shrunk viewport: the driver then reports the RandR
+# *monitor* as the inverse-scaled size (2022x1137 at 5%), though the X
+# screen stays 1920x1080. i3 sizes fullscreen windows from the monitor, so
+# games and maximized windows spill past every edge. Pin the monitor back
+# to the real desktop size. (i3 config uses primary/nonprimary, not output
+# names, so the "~tv" monitor name doesn't matter to it.)
+# setmonitor fails with BadValue if the monitor already exists (re-runs,
+# hotplug), so drop it first; "not found" on the first run is expected.
+xrandr --delmonitor HDMI-0~tv >/dev/null 2>&1 || true
+xrandr --setmonitor HDMI-0~tv 1920/160x1080/90+0+0 HDMI-0 >/dev/null
+
+# i3 reads monitor geometry at startup; restart in place (keeps layout and
+# windows) so it picks up the pinned size. Short pause so the global i3
+# postswitch hook that runs after this one talks to a live i3.
+if command -v i3-msg >/dev/null && pgrep -x i3 >/dev/null; then
+    i3-msg restart >/dev/null
+    sleep 1
+fi
