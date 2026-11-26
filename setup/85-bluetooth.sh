@@ -106,7 +106,7 @@ fi
 # Second distinct A2DP failure mode after the bluez5-backend one above,
 # and it looks nothing like a radio problem: audio plays fine, then the
 # headset drops mid-stream and reconnects seconds later, over and over.
-# The AX211 (USB id 8087:0033) ships with power/control=auto and a 2s
+# The AX211 (USB id 8087:0033) and AC 3168 (8087:0aa7) ship with power/control=auto and a 2s
 # autosuspend delay, so any brief idle gap (a pause, a silent passage)
 # parks the USB interface; waking it starves the A2DP transport. The
 # journal shows the exact chain:
@@ -120,21 +120,27 @@ fi
 # power/ attributes aren't present yet. `on` = never autosuspend.
 #
 # Verify live (while a headset is connected):
-#   cat /sys/bus/usb/devices/*/power/control   # the AX211's should read "on"
+#   cat /sys/bus/usb/devices/*/power/control   # the Intel radio's should read "on"
 # runtime_suspended_time under that device's power/ should stop climbing.
 BT_AUTOSUSPEND_RULE=/etc/udev/rules.d/81-bt-no-autosuspend.rules
-if [[ ! -f "$BT_AUTOSUSPEND_RULE" ]]; then
-    log "disabling USB autosuspend for the Intel BT radio (A2DP dropout fix)"
-    sudo tee "$BT_AUTOSUSPEND_RULE" >/dev/null <<'EOF'
-# Intel AX211 Bluetooth (8087:0033): USB autosuspend causes A2DP dropouts.
+# One line per Intel BT radio seen with this problem. Add new ids here.
+#   8087:0033  AX211   (Precision 3591 laptop)
+#   8087:0aa7  AC 3168 (home server; same drop-and-reconnect symptom)
+BT_AUTOSUSPEND_RULE_CONTENT='# Intel Bluetooth radios: USB autosuspend causes A2DP dropouts.
 ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0033", TEST=="power/control", ATTR{power/control}="on"
-EOF
+ACTION=="add", SUBSYSTEM=="usb", ATTR{idVendor}=="8087", ATTR{idProduct}=="0aa7", TEST=="power/control", ATTR{power/control}="on"'
+# Compare content, not just existence, so adding an id above rewrites the
+# rule on machines that already have the older single-id version.
+if [[ "$(cat "$BT_AUTOSUSPEND_RULE" 2>/dev/null)" != "$BT_AUTOSUSPEND_RULE_CONTENT" ]]; then
+    log "disabling USB autosuspend for Intel BT radios (A2DP dropout fix)"
+    printf '%s\n' "$BT_AUTOSUSPEND_RULE_CONTENT" | sudo tee "$BT_AUTOSUSPEND_RULE" >/dev/null
     # Reload rules and re-trigger so it applies without a reboot. Match by
     # the same vendor id; the trigger is a no-op if the radio isn't present.
+    # ACTION=="add" rules need an explicit add event to fire on re-trigger.
     sudo udevadm control --reload-rules
-    sudo udevadm trigger --subsystem-match=usb --attr-match=idVendor=8087
+    sudo udevadm trigger --action=add --subsystem-match=usb --attr-match=idVendor=8087
 else
-    log "$BT_AUTOSUSPEND_RULE already present"
+    log "$BT_AUTOSUSPEND_RULE already up to date"
 fi
 
 # --- A2DP dropouts every ~5 minutes: Wi-Fi roaming scans, NOT a BT fault ---
