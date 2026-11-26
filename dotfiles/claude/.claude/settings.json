@@ -8,7 +8,6 @@
       "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-44-55-587Z-2c82644e.txt architecture/tms-api-documentation.md \"TMS API Documentation\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3012100134\")",
       "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-44-57-457Z-55f68be7.txt architecture/tms-server-requirements.md \"TMS Server Requirements Specification\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3014557703\")",
       "Bash(python3 batch_process.py /tmp/mcp/mcp-server-atlassian-jira/2026-04-11T00-45-00-013Z-5adc3cfb.txt communication/tms-rabbitmq.md \"TMS RabbitMQ Documentation\" \"https://ventek.atlassian.net/wiki/spaces/WP/pages/3013509155\")",
-      "Bash(python3:*)",
       "WebFetch(domain:www.debian.org)",
       "WebFetch(domain:www.chromium.org)",
       "WebFetch(domain:beta.apple.com)",
@@ -21,9 +20,44 @@
       "WebFetch(domain:vercel.com)",
       "Bash(git ls-tree *)",
       "mcp__atlassian__getAccessibleAtlassianResources",
-      "mcp__atlassian__getJiraIssue"
+      "mcp__atlassian__getJiraIssue",
+      "Bash(../.venv/bin/mkdocs gh-deploy *)",
+      "Bash(.venv/bin/mkdocs gh-deploy *)"
     ],
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "ask": [
+      "Bash(runpodctl pod create *)",
+      "Bash(runpodctl pod delete *)",
+      "Bash(runpodctl pod restart *)",
+      "Bash(runpodctl pod start *)",
+      "Bash(runpodctl pod stop *)",
+      "Bash(runpodctl pod update *)",
+      "Bash(runpodctl serverless *)",
+      "Bash(runpodctl sls *)",
+      "Bash(runpodctl network-volume *)",
+      "Bash(runpodctl nv *)",
+      "Bash(runpodctl template *)",
+      "Bash(runpodctl tpl *)",
+      "Bash(runpodctl registry *)",
+      "Bash(runpodctl reg *)",
+      "Bash(runpodctl hub *)",
+      "Bash(runpodctl model *)",
+      "Bash(runpodctl send *)",
+      "Bash(runpodctl receive *)",
+      "Bash(runpodctl ssh *)",
+      "Bash(runpodctl doctor *)",
+      "Bash(runpodctl config *)",
+      "Bash(runpodctl create *)",
+      "Bash(runpodctl remove *)",
+      "Bash(runpodctl start *)",
+      "Bash(runpodctl stop *)",
+      "Bash(runpodctl exec *)",
+      "Bash(runpodctl project *)",
+      "Bash(runpodctl -*)",
+      "Bash(curl *runpod.io*)",
+      "Bash(curl *runpod.ai*)",
+      "Bash(wget *runpod.io*)"
+    ]
   },
   "statusLine": {
     "type": "command",
@@ -41,5 +75,12 @@
     }
   },
   "theme": "dark",
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Bash(tailscale status:*)",
+      "Bash(tailscale ip:*)"
+    ]
+  }
 }
