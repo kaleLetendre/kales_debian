@@ -19,8 +19,7 @@ setopt AUTO_CD               # type a directory name to cd into it
 
 # Turn off terminal flow control. By default the tty driver eats ctrl+s as
 # XOFF (freeze the screen) and ctrl+q as XON, so neither key ever reaches
-# the program running in the terminal. nvim wants both: ctrl+s to save and
-# ctrl+q for blockwise visual, per dotfiles/nvim/.../config/standard-keys.lua.
+# the program running in the terminal (ctrl+s is save in most editors).
 # Nothing here relies on software flow control, and a frozen terminal after
 # a stray ctrl+s is a worse default than not having it.
 # Guarded on stdin being a terminal: an interactive zsh without a tty
