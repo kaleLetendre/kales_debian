@@ -1,0 +1,40 @@
+[Unit]
+Description=Claude Code Remote Control server for %f
+After=network-online.target
+Wants=network-online.target
+
+# A broken instance should stop rather than restart forever.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%f
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+
+# Spawn mode, NOT --continue. --continue reuses the directory's existing
+# environment instead of registering a new one, which would keep the mobile
+# picker clean - but it is single-session mode and exits as soon as the
+# resumed session completes, so it restart-loops until systemd gives up.
+# Spawn mode stays running; the cost is a new environment on every start.
+#
+# --spawn must be explicit or the first run inside a git repo prompts
+# interactively for a spawn mode, which has no answer with no TTY.
+# --no-create-session-in-dir suppresses a placeholder session that would
+# otherwise be auto-named "<hostname>-random-words".
+ExecStart=%h/.local/bin/claude remote-control --spawn=same-dir --no-create-session-in-dir
+
+# Server mode repaints a status board about once a second. Nulling stdout
+# silenced that, but it also hid the restart loop above, because this app
+# prints its errors to stdout. Keep stdout and rate-limit it instead, so
+# failures stay visible without flooding the journal.
+LogRateLimitIntervalSec=60
+LogRateLimitBurst=30
+
+# The session times out and exits after a network outage of ~10 minutes;
+# restarting is how it comes back once the network returns.
+Restart=always
+RestartSec=15
+
+[Install]
+WantedBy=default.target

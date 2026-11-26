@@ -1,0 +1,49 @@
+#!/bin/bash
+# Reconcile one Claude Code Remote Control environment per project under
+# ~/personal (plus ~/personal itself) so every project is selectable from the
+# mobile app.
+#
+# Idempotent by design: it runs unattended from a systemd path unit whenever the
+# directory changes, so it must be safe to run repeatedly and mid-change.
+#
+# Spawn mode is deliberately not configured per project. Reusing an environment
+# requires `--continue`, which is single-session only, so worktree isolation
+# never applies. See claude-rc-serve.
+
+set -u
+
+ROOT="$HOME/personal"
+WANTS="$HOME/.config/systemd/user/default.target.wants"
+
+# Build the desired instance set: $ROOT itself, plus each direct subdirectory.
+# The trailing slash in the glob keeps this to directories and skips dotfiles.
+declare -A want=()
+for dir in "$ROOT" "$ROOT"/*/; do
+    dir=${dir%/}
+    [ -d "$dir" ] || continue
+    want[$(systemd-escape --path "$dir")]=1
+done
+
+# Enable and start everything wanted. Both commands are no-ops when the
+# instance is already enabled and running.
+for instance in "${!want[@]}"; do
+    systemctl --user enable "claude-remote-control@$instance.service"
+    systemctl --user start "claude-remote-control@$instance.service"
+done
+
+# Retire instances for directories that no longer exist. Reading the enabled
+# set from the wants directory avoids depending on systemctl output format.
+#
+# This intentionally does not touch ~/.claude/projects/<project>/, which holds
+# conversation transcripts, and cannot remove the project's environment from
+# the API either - that has to be deleted from the app.
+for link in "$WANTS"/claude-remote-control@*.service; do
+    [ -e "$link" ] || continue
+    unit=$(basename "$link")
+    instance=${unit#claude-remote-control@}
+    instance=${instance%.service}
+
+    if [ -z "${want[$instance]+set}" ]; then
+        systemctl --user disable --now "$unit"
+    fi
+done

@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch ~/personal for projects being added or removed
+
+[Path]
+# Fires when entries are added to or removed from the directory, which is
+# what adding or deleting a project looks like from out here.
+PathModified=%h/personal
+Unit=claude-rc-sync.service
+
+[Install]
+WantedBy=default.target

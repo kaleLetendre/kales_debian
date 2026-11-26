@@ -1,0 +1,9 @@
+[Unit]
+Description=Reconcile Claude Remote Control environments with the projects in ~/personal
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/claude-rc-sync
+
+[Install]
+WantedBy=default.target

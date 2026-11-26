@@ -1,0 +1,12 @@
+[Unit]
+Description=RunPod pod watchdog (terminate pods past ceiling or idle)
+
+[Service]
+Type=oneshot
+# runpodctl lives in ~/.local/bin, which is not on the systemd user PATH
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+# --execute makes it terminate; exit code 2 = it printed warnings (shows as failed in `systemctl --user status`)
+ExecStart=/usr/bin/python3 %h/personal/continual-pc/steps/07_scale/runpod/watchdog.py --execute
+SuccessExitStatus=0 2
+# a salvage fetch before a termination can take minutes (watchdog.salvage caps it at 15)
+TimeoutStartSec=1200
